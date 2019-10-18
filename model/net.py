@@ -2,41 +2,29 @@ import torch.nn as nn
 from transformers.modeling_bert import BertPreTrainedModel, BertModel
 
 
-class BertClassifier(BertPreTrainedModel):
-    def __init__(self, config, num_labels, vocab) -> None:
-        super(BertClassifier, self).__init__(config)
+class BERTClassifier(BertPreTrainedModel):
+    def __init__(self, config, num_classes, vocab) -> None:
+        super(BERTClassifier, self).__init__(config)
         self.bert = BertModel(config)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
-        self.classifier = nn.Linear(config.hidden_size, num_labels)
+        self.classifier = nn.Linear(config.hidden_size, num_classes)
         self.vocab = vocab
         self.init_weights()
 
-    def forward(self, input_ids):
+    def forward(self, input_ids, out_all_hidden_states=True):
         # pooled_output is not same hidden vector corresponds to first token from last encoded layers
-        attention_mask = input_ids.ne(self.vocab.to_indices(self.vocab.padding_token)).float()
-        encoded_layers, pooled_output = self.bert(input_ids, attention_mask, None)
-            encoded_layers = [encoded_layer[:, 0, :] for encoded_layer in encoded_layers]
-            encoded_layers.append(pooled_output)
-            pooled_output = self.dropout(pooled_output)
-            logits = self.classifier(pooled_output)
-            return logits, encoded_layers
+        attention_mask = input_ids.ne(
+            self.vocab.to_indices(self.vocab.padding_token)
+        ).float()
+        outputs = self.bert(input_ids=input_ids, attention_mask=attention_mask)
+        pooled_output = self.dropout(outputs[1])
+        logits = self.classifier(pooled_output)
+
+        if out_all_hidden_states:
+            all_hidden_states = [
+                transformer_layer[:, 0, :] for transformer_layer in outputs[2][1:]
+            ]
+            all_hidden_states.append(pooled_output)
+            return logits, all_hidden_states
         else:
-            _, pooled_output = self.bert(input_ids, None, attention_mask,
-                                         output_all_encoded_layers=output_all_encoded_layers)
-            pooled_output = self.dropout(pooled_output)
-            logits = self.classifier(pooled_output)
-            return logits, pooled_output
-
-
-class Detector(nn.Module):
-    def __init__(self, input_features_dim, num_classes):
-        super(Detector, self).__init__()
-        self._ops = nn.Sequential(nn.Linear(input_features_dim, input_features_dim // 2),
-                                  nn.ReLU(),
-                                  nn.Dropout(),
-                                  nn.Linear(input_features_dim // 2, num_classes),
-                                  nn.Dropout())
-
-    def forward(self, x):
-        score = self._ops(x)
-        return score
+            return logits, outputs[0][:, 0, :]
