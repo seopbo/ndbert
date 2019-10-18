@@ -17,28 +17,31 @@ from torch.utils.tensorboard import SummaryWriter
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_dir', default='trec', help="directory containing config.json of data")
 parser.add_argument('--model_dir', default='experiments/trec', help="directory containing config.json of model")
+parser.add_argument('--pretrained', default='bert-base-uncased', help='pretrained weights of bert')
 
-args = argparse.Namespace(data_dir='trec', model_dir='experiments/trec')
+
 if __name__ == '__main__':
     args = parser.parse_args()
     data_dir = Path('dataset') / args.data_dir
     model_dir = Path(args.model_dir)
+    pretrained_dir = Path('pretrained')
     data_config = Config(data_dir / 'config.json')
     model_config = Config(model_dir / 'config.json')
 
     # tokenizer
-    ptr_tokenizer = BertTokenizer.from_pretrained("bert-base-uncased", do_lower_case=True)
-    with open('pretrained/vocab.pkl', mode='rb') as io:
+    ptr_tokenizer = BertTokenizer.from_pretrained(args.pretrained, do_lower_case=True)
+    vocab_filepath = pretrained_dir / '{}-vocab.pkl'.format(args.pretrained)
+    with open(vocab_filepath, mode='rb') as io:
         vocab = pickle.load(io)
     pad_sequence = PadSequence(length=model_config.length, pad_val=vocab.to_indices(vocab.padding_token))
     preprocessor = PreProcessor(vocab=vocab, split_fn=ptr_tokenizer.tokenize, pad_fn=pad_sequence)
 
     # model
-    config = BertConfig.from_pretrained('bert-base-uncased', output_hidden_states=True)
+    config_filepath = pretrained_dir / '{}-config.json'.format(args.pretrained)
+    config = BertConfig.from_pretrained(config_filepath, output_hidden_states=True)
     model = BertClassifier(config, num_classes=model_config.num_classes, vocab=preprocessor.vocab)
-    model.from_pretrained('bert-base-uncased')
-    # bert_pretrained = torch.load('pretrained/pytorch_model.bin')
-    # model.load_state_dict(bert_pretrained, strict=False)
+    pretrained_weights = torch.load(pretrained_dir / '{}-pytorch_model.bin'.format(args.pretrained))
+    model.load_state_dict(pretrained_weights, strict=False)
 
     # training
     tr_ds = Corpus(data_config.train, preprocessor.preprocess)
@@ -47,6 +50,7 @@ if __name__ == '__main__':
     val_dl = DataLoader(val_ds, batch_size=model_config.batch_size)
 
     loss_fn = LSR(epsilon=.1, num_classes=model_config.num_classes)
+
 
     opt = Adam(
         [
@@ -63,6 +67,7 @@ if __name__ == '__main__':
     summary_manager = SummaryManager(model_dir)
     best_val_loss = 1e+10
 
+    x_mb, y_mb = map(lambda elm: elm.to(device), next(iter(tr_dl)))
     for epoch in tqdm(range(model_config.epochs), desc='epochs'):
 
         tr_loss = 0
@@ -72,7 +77,7 @@ if __name__ == '__main__':
         for step, mb in tqdm(enumerate(tr_dl), desc='steps', total=len(tr_dl)):
             x_mb, y_mb = map(lambda elm: elm.to(device), mb)
             opt.zero_grad()
-            y_hat_mb, _ = model(x_mb)
+            y_hat_mb, _ = model(x_mb, out_all_hidden_states=False)
             mb_loss = loss_fn(y_hat_mb, y_mb)
             mb_loss.backward()
             opt.step()
