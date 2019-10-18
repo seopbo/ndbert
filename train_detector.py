@@ -4,23 +4,22 @@ import torch
 import numpy as np
 from pathlib import Path
 from torch.utils.data import DataLoader
-from pytorch_pretrained_bert.modeling import BertConfig
-from pretrained.tokenization import BertTokenizer
+from transformers.modeling_bert import BertConfig
+from transformers.tokenization_bert import BertTokenizer
 from model.net import BertClassifier
 from model.data import Corpus
-from model.utils import Tokenizer, PadSequence
+from model.utils import PreProcessor, PadSequence
 from model.uncertainty import get_mcb_score
 from sklearn.preprocessing import StandardScaler
-from sklearn.neural_network.multilayer_perceptron import MLPClassifier
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report
-from imblearn.combine import SMOTETomek
 from tqdm import tqdm
 from utils import Config, CheckpointManager, SummaryManager
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--data_dir', default='active/train', help="Directory containing config.json of data")
-parser.add_argument('--restore_dir', default='experiments/train',
-                    help="Directory containing config.json of pretrained model")
+parser.add_argument('--data_dir', default='trec', help="Directory containing config.json of data")
+parser.add_argument('--restore_dir', default='experiments/trec',
+                    help="directory containing config.json of pretrained model")
 parser.add_argument('--topk', default=10, type=int)
 
 
@@ -32,26 +31,27 @@ if __name__ == '__main__':
     restore_config = Config(json_path=restore_dir / 'config.json')
 
     # tokenizer
-    ptr_tokenizer = BertTokenizer.from_pretrained('pretrained/vocab.korean.rawtext.list', do_lower_case=False)
+    ptr_tokenizer = BertTokenizer.from_pretrained("bert-base-uncased", do_lower_case=True)
     with open('pretrained/vocab.pkl', mode='rb') as io:
         vocab = pickle.load(io)
     pad_sequence = PadSequence(length=restore_config.length, pad_val=vocab.to_indices(vocab.padding_token))
-    tokenizer = Tokenizer(vocab=vocab, split_fn=ptr_tokenizer.tokenize, pad_fn=pad_sequence)
+    preprocessor = PreProcessor(vocab=vocab, split_fn=ptr_tokenizer.tokenize, pad_fn=pad_sequence)
 
     # model (restore)
     checkpoint_manager = CheckpointManager(restore_dir)
     ckpt = checkpoint_manager.load_checkpoint('best.tar')
-    config = BertConfig('pretrained/bert_config.json')
-    model = BertClassifier(config, num_labels=restore_config.num_classes, vocab=tokenizer.vocab)
+    config = BertConfig.from_pretrained('bert-base-uncased', output_hidden_states=True)
+    model = BertClassifier(config, num_labels=restore_config.num_classes, vocab=preprocessor.vocab)
     model.load_state_dict(ckpt['model_state_dict'])
+
     device = torch.device('cuda') if torch.cuda.is_available else torch.device('cpu')
     model.eval()
     model.to(device)
 
     # train detector
-    ind_tr_ds = Corpus(data_config.tr_ind, tokenizer.preprocess)
+    ind_tr_ds = Corpus(data_config.tr_ind, preprocessor.preprocess)
     ind_tr_dl = DataLoader(ind_tr_ds, batch_size=128, num_workers=4)
-    ood_tr_ds = Corpus(data_config.tr_ood, tokenizer.preprocess)
+    ood_tr_ds = Corpus(data_config.tr_ood, preprocessor.preprocess)
     ood_tr_dl = DataLoader(ood_tr_ds, batch_size=128, num_workers=4)
 
     with open(restore_dir / 'feature_params.pkl', mode='rb') as io:
@@ -68,7 +68,7 @@ if __name__ == '__main__':
             x_mb, _ = map(lambda elm: elm.to(device), mb)
 
             with torch.no_grad():
-                _, encoded_layers = model(x_mb, output_all_encoded_layers=True)
+                _, encoded_layers = model(x_mb, out_all_hidden_states=True)
                 mb_features.extend(get_mcb_score(encoded_layers[ops_idx], layer_mean,
                                                  layer_precision, topk=args.topk).cpu().numpy().tolist())
 
@@ -88,7 +88,7 @@ if __name__ == '__main__':
             x_mb, _ = map(lambda elm: elm.to(device), mb)
 
             with torch.no_grad():
-                _, encoded_layers = model(x_mb, output_all_encoded_layers=True)
+                _, encoded_layers = model(x_mb, out_all_hidden_states=True)
                 mb_features.extend(get_mcb_score(encoded_layers[ops_idx], layer_mean,
                                                  layer_precision, topk=args.topk).cpu().numpy().tolist())
         else:
@@ -99,12 +99,11 @@ if __name__ == '__main__':
 
     X = np.concatenate([ind_features, ood_features])
     y = np.concatenate([ind_label, ood_label])
-    X_samp, y_samp = SMOTETomek().fit_resample(X, y)
-    sc = StandardScaler().fit(X_samp)
-    X_samp = sc.transform(X_samp)
 
-    detector = MLPClassifier(hidden_layer_sizes=(np.shape(X_samp)[1] // 2,), early_stopping=True,
-                             activation='relu', random_state=777, max_iter=1000, alpha=5e-4).fit(X_samp, y_samp)
+    sc = StandardScaler().fit(X)
+    X = sc.transform(X)
+
+    detector = LogisticRegression(random_state=777, max_iter=1000).fit(X, y)
     y_hat = detector.predict(sc.transform(X))
 
     lr_summary = classification_report(y, y_hat, target_names=['ind_tr', 'ood_tr'], output_dict=True)

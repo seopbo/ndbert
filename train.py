@@ -3,60 +3,57 @@ import pickle
 import torch
 from pathlib import Path
 from torch.utils.data import DataLoader
-from pytorch_pretrained_bert.modeling import BertConfig
-from pytorch_pretrained_bert.optimization import BertAdam
-from pretrained.tokenization import BertTokenizer
+from torch.optim import Adam
+from transformers.modeling_bert import BertConfig
+from transformers.tokenization_bert import BertTokenizer
 from model.net import BertClassifier
 from model.data import Corpus
-from model.utils import Tokenizer, PadSequence
+from model.utils import PreProcessor, PadSequence
 from model.metric import evaluate, acc, LSR
 from utils import Config, CheckpointManager, SummaryManager
 from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--data_dir', default='corpus', help="Directory containing config.json of data")
-parser.add_argument('--model_dir', default='experiments/corpus', help="Directory containing config.json of model")
+parser.add_argument('--data_dir', default='trec', help="directory containing config.json of data")
+parser.add_argument('--model_dir', default='experiments/trec', help="directory containing config.json of model")
 
-
+args = argparse.Namespace(data_dir='trec', model_dir='experiments/trec')
 if __name__ == '__main__':
     args = parser.parse_args()
-    data_dir = Path(args.data_dir)
+    data_dir = Path('dataset') / args.data_dir
     model_dir = Path(args.model_dir)
-    data_config = Config(json_path=data_dir / 'config.json')
-    model_config = Config(json_path=model_dir / 'config.json')
+    data_config = Config(data_dir / 'config.json')
+    model_config = Config(model_dir / 'config.json')
 
     # tokenizer
-    ptr_tokenizer = BertTokenizer.from_pretrained('pretrained/vocab.korean.rawtext.list', do_lower_case=False)
+    ptr_tokenizer = BertTokenizer.from_pretrained("bert-base-uncased", do_lower_case=True)
     with open('pretrained/vocab.pkl', mode='rb') as io:
         vocab = pickle.load(io)
     pad_sequence = PadSequence(length=model_config.length, pad_val=vocab.to_indices(vocab.padding_token))
-    tokenizer = Tokenizer(vocab=vocab, split_fn=ptr_tokenizer.tokenize, pad_fn=pad_sequence)
+    preprocessor = PreProcessor(vocab=vocab, split_fn=ptr_tokenizer.tokenize, pad_fn=pad_sequence)
 
     # model
-    config = BertConfig('pretrained/bert_config.json')
-    model = BertClassifier(config, num_labels=model_config.num_classes, vocab=tokenizer.vocab)
-    bert_pretrained = torch.load('pretrained/pytorch_model.bin')
-    model.load_state_dict(bert_pretrained, strict=False)
+    config = BertConfig.from_pretrained('bert-base-uncased', output_hidden_states=True)
+    model = BertClassifier(config, num_classes=model_config.num_classes, vocab=preprocessor.vocab)
+    model.from_pretrained('bert-base-uncased')
+    # bert_pretrained = torch.load('pretrained/pytorch_model.bin')
+    # model.load_state_dict(bert_pretrained, strict=False)
 
     # training
-    tr_ds = Corpus(data_config.train, tokenizer.preprocess)
+    tr_ds = Corpus(data_config.train, preprocessor.preprocess)
     tr_dl = DataLoader(tr_ds, batch_size=model_config.batch_size, shuffle=True, num_workers=4, drop_last=True)
-    val_ds = Corpus(data_config.validation, tokenizer.preprocess)
+    val_ds = Corpus(data_config.test, preprocessor.preprocess)
     val_dl = DataLoader(val_ds, batch_size=model_config.batch_size)
 
     loss_fn = LSR(epsilon=.1, num_classes=model_config.num_classes)
 
-    num_warmup_steps = 2000
-    num_total_steps = len(tr_dl) * model_config.epochs
-    warmup_proportion = float(num_warmup_steps) / float(num_total_steps)
-
-    opt = BertAdam(
+    opt = Adam(
         [
             {"params": model.bert.parameters(), "lr": model_config.learning_rate / 100},
             {"params": model.classifier.parameters(), "lr": model_config.learning_rate},
 
-        ], weight_decay=5e-4, schedule='warmup_linear', warmup=warmup_proportion, t_total=num_total_steps)
+        ], weight_decay=5e-4)
 
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     model.to(device)

@@ -4,11 +4,11 @@ import torch
 import numpy as np
 from pathlib import Path
 from torch.utils.data import DataLoader
-from pytorch_pretrained_bert.modeling import BertConfig
-from pretrained.tokenization import BertTokenizer
+from transformers.modeling_bert import BertConfig
+from transformers.tokenization_bert import BertTokenizer
 from model.net import BertClassifier
 from model.data import Corpus
-from model.utils import Tokenizer, PadSequence
+from model.utils import PreProcessor, PadSequence
 from model.uncertainty import get_mcb_score
 from sklearn.metrics import classification_report
 from tqdm import tqdm
@@ -16,39 +16,39 @@ from utils import Config, CheckpointManager, SummaryManager
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--data_dir', default='active/train', help="Directory containing config.json of data")
-parser.add_argument('--restore_dir', default='experiments/train', help="Directory containing config.json of model")
+parser.add_argument('--data_dir', default='trec', help="Directory containing config.json of data")
+parser.add_argument('--restore_dir', default='experiments/trec', help="Directory containing config.json of model")
 parser.add_argument('--topk', default=10, type=int)
 
 
 if __name__ == '__main__':
     args = parser.parse_args()
-    data_dir = Path(args.data_dir)
+    data_dir = Path('dataset') / args.data_dir
     restore_dir = Path(args.restore_dir)
     data_config = Config(json_path=data_dir / 'config.json')
-    model_config = Config(json_path=restore_dir / 'config.json')
+    restore_config = Config(json_path=restore_dir / 'config.json')
 
     # tokenizer
-    ptr_tokenizer = BertTokenizer.from_pretrained('pretrained/vocab.korean.rawtext.list', do_lower_case=False)
+    ptr_tokenizer = BertTokenizer.from_pretrained("bert-base-uncased", do_lower_case=True)
     with open('pretrained/vocab.pkl', mode='rb') as io:
         vocab = pickle.load(io)
-    pad_sequence = PadSequence(length=model_config.length, pad_val=vocab.to_indices(vocab.padding_token))
-    tokenizer = Tokenizer(vocab=vocab, split_fn=ptr_tokenizer.tokenize, pad_fn=pad_sequence)
+    pad_sequence = PadSequence(length=restore_config.length, pad_val=vocab.to_indices(vocab.padding_token))
+    preprocessor = PreProcessor(vocab=vocab, split_fn=ptr_tokenizer.tokenize, pad_fn=pad_sequence)
 
     # model (restore)
     checkpoint_manager = CheckpointManager(restore_dir)
     ckpt = checkpoint_manager.load_checkpoint('best.tar')
-    config = BertConfig('pretrained/bert_config.json')
-    model = BertClassifier(config, num_labels=model_config.num_classes, vocab=tokenizer.vocab)
+    config = BertConfig.from_pretrained('bert-base-uncased', output_hidden_states=True)
+    model = BertClassifier(config, num_labels=restore_config.num_classes, vocab=preprocessor.vocab)
     model.load_state_dict(ckpt['model_state_dict'])
     model.eval()
     device = torch.device('cuda') if torch.cuda.is_available else torch.device('cpu')
     model.to(device)
 
     # evaluate detector
-    ind_val_ds = Corpus(data_config.val_ind, tokenizer.preprocess)
+    ind_val_ds = Corpus(data_config.val_ind, preprocessor.preprocess)
     ind_val_dl = DataLoader(ind_val_ds, batch_size=128, num_workers=4)
-    ood_val_ds = Corpus(data_config.val_ood, tokenizer.preprocess)
+    ood_val_ds = Corpus(data_config.val_ood, preprocessor.preprocess)
     ood_val_dl = DataLoader(ood_val_ds, batch_size=128, num_workers=4)
 
     with open(restore_dir / 'feature_params.pkl', mode='rb') as io:
@@ -65,7 +65,7 @@ if __name__ == '__main__':
             x_mb, _ = map(lambda elm: elm .to(device), mb)
 
             with torch.no_grad():
-                _, encoded_layers = model(x_mb, output_all_encoded_layers=True)
+                _, encoded_layers = model(x_mb, out_all_hidden_states=True)
                 mb_features.extend(get_mcb_score(encoded_layers[ops_idx], layer_mean,
                                                  layer_precision, topk=args.topk).cpu().numpy().tolist())
         else:
@@ -85,7 +85,7 @@ if __name__ == '__main__':
             x_mb, _ = map(lambda elm: elm.to(device), mb)
 
             with torch.no_grad():
-                _, encoded_layers = model(x_mb, output_all_encoded_layers=True)
+                _, encoded_layers = model(x_mb, out_all_hidden_states=True)
                 mb_features.extend(get_mcb_score(encoded_layers[ops_idx], layer_mean,
                                                  layer_precision, topk=args.topk).cpu().numpy().tolist())
         else:

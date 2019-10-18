@@ -16,7 +16,7 @@ def get_penultimate_feature_params(model, num_classes, data_loader, device, cov=
     for mb in tqdm(data_loader, total=len(data_loader)):
         x_mb, y_mb = map(lambda elm: elm.to(device), mb)
         with torch.no_grad():
-            _, penultimate_features = model(x_mb, output_all_encoded_layers=False)
+            _, penultimate_features = model(x_mb, out_all_hidden_states=False)
 
             for idx in range(y_mb.size()[0]):
                 penultimate_feature_each_class[y_mb[idx].item()].append(penultimate_features[idx].cpu().numpy())
@@ -43,7 +43,7 @@ def get_feature_params(model, num_classes, data_loader, device, cov=ShrunkCovari
     for mb in tqdm(data_loader, total=len(data_loader)):
         x_mb, y_mb = map(lambda elm: elm.to(device), mb)
         with torch.no_grad():
-            _, encoded_features = model(x_mb, output_all_encoded_layers=True)
+            _, encoded_features = model(x_mb, out_all_hidden_states=True)
 
         for ops_idx in ops_indices:
 
