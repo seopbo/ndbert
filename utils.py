@@ -4,19 +4,25 @@ from pathlib import Path
 
 
 class Config:
-    def __init__(self, json_path):
-        with open(json_path, mode="r") as io:
-            params = json.loads(io.read())
-        self.__dict__.update(params)
+    def __init__(self, json_path_or_dict):
+        if isinstance(json_path_or_dict, dict):
+            self.__dict__.update(json_path_or_dict)
+        else:
+            with open(json_path_or_dict, mode="r") as io:
+                params = json.loads(io.read())
+            self.__dict__.update(params)
 
     def save(self, json_path):
         with open(json_path, mode="w") as io:
             json.dump(self.__dict__, io, indent=4)
 
-    def update(self, json_path):
-        with open(json_path, mode="r") as io:
-            params = json.loads(io.read())
-        self.__dict__.update(params)
+    def update(self, json_path_or_dict):
+        if isinstance(json_path_or_dict, dict):
+            self.__dict__.update(json_path_or_dict)
+        else:
+            with open(json_path_or_dict, mode="r") as io:
+                params = json.loads(io.read())
+            self.__dict__.update(params)
 
     @property
     def dict(self):
