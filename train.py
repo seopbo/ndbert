@@ -1,6 +1,7 @@
 import argparse
 import pickle
 import torch
+import torch.nn as nn
 from pathlib import Path
 from torch.utils.data import DataLoader
 from torch.optim import Adam
@@ -19,7 +20,8 @@ parser.add_argument('--data_dir', default='trec', help="directory containing con
 parser.add_argument('--model_dir', default='experiments/trec', help="directory containing config.json of model")
 parser.add_argument('--pretrained', default='bert-base-uncased', help='pretrained weights of bert')
 
-
+args = argparse.Namespace(data_dir='trec', model_dir='experiments/trec',
+                          pretrained='bert-base-uncased')
 if __name__ == '__main__':
     args = parser.parse_args()
     data_dir = Path('dataset') / args.data_dir
@@ -40,8 +42,8 @@ if __name__ == '__main__':
     config_filepath = pretrained_dir / '{}-config.json'.format(args.pretrained)
     config = BertConfig.from_pretrained(config_filepath, output_hidden_states=True)
     model = BertClassifier(config, num_classes=model_config.num_classes, vocab=preprocessor.vocab)
-    pretrained_weights = torch.load(pretrained_dir / '{}-pytorch_model.bin'.format(args.pretrained))
-    model.load_state_dict(pretrained_weights, strict=False)
+    bert_checkpoint = torch.load(pretrained_dir / '{}-pytorch_model.bin'.format(args.pretrained))
+    model.load_state_dict(bert_checkpoint, strict=False)
 
     # training
     tr_ds = Corpus(data_config.train, preprocessor.preprocess)
@@ -49,15 +51,14 @@ if __name__ == '__main__':
     val_ds = Corpus(data_config.test, preprocessor.preprocess)
     val_dl = DataLoader(val_ds, batch_size=model_config.batch_size)
 
-    loss_fn = LSR(epsilon=.1, num_classes=model_config.num_classes)
-
-
+    # loss_fn = LSR(epsilon=.1, num_classes=model_config.num_classes)
+    loss_fn = nn.CrossEntropyLoss()
     opt = Adam(
         [
-            {"params": model.bert.parameters(), "lr": model_config.learning_rate / 100},
+            {"params": model.bert.parameters(), "lr": model_config.learning_rate},
             {"params": model.classifier.parameters(), "lr": model_config.learning_rate},
 
-        ], weight_decay=5e-4)
+        ])
 
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     model.to(device)
@@ -67,7 +68,6 @@ if __name__ == '__main__':
     summary_manager = SummaryManager(model_dir)
     best_val_loss = 1e+10
 
-    x_mb, y_mb = map(lambda elm: elm.to(device), next(iter(tr_dl)))
     for epoch in tqdm(range(model_config.epochs), desc='epochs'):
 
         tr_loss = 0

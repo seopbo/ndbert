@@ -1,10 +1,18 @@
 import json
 import torch
 from pathlib import Path
+from typing import Union
 
 
 class Config:
-    def __init__(self, json_path_or_dict):
+    """Config class"""
+
+    def __init__(self, json_path_or_dict: Union[str, dict]) -> None:
+        """Instantiating Config class
+
+        Args:
+            json_path_or_dict (Union[str, dict]): filepath of config or dictionary which has attributes
+        """
         if isinstance(json_path_or_dict, dict):
             self.__dict__.update(json_path_or_dict)
         else:
@@ -12,11 +20,21 @@ class Config:
                 params = json.loads(io.read())
             self.__dict__.update(params)
 
-    def save(self, json_path):
+    def save(self, json_path: str) -> None:
+        """Saving config to json_path
+
+        Args:
+            json_path (str): filepath of config
+        """
         with open(json_path, mode="w") as io:
             json.dump(self.__dict__, io, indent=4)
 
-    def update(self, json_path_or_dict):
+    def update(self, json_path_or_dict) -> None:
+        """Updating Config instance
+
+        Args:
+            json_path_or_dict (Union[str, dict]): filepath of config or dictionary which has attributes
+        """
         if isinstance(json_path_or_dict, dict):
             self.__dict__.update(json_path_or_dict)
         else:
@@ -33,6 +51,10 @@ class CheckpointManager:
     def __init__(self, model_dir):
         if not isinstance(model_dir, Path):
             model_dir = Path(model_dir)
+
+        if not model_dir.exists():
+            model_dir.mkdir(parents=True)
+
         self._model_dir = model_dir
 
     def save_checkpoint(self, state, filename):
@@ -47,6 +69,9 @@ class SummaryManager:
     def __init__(self, model_dir):
         if not isinstance(model_dir, Path):
             model_dir = Path(model_dir)
+        if not model_dir.exists():
+            model_dir.mkdir(parents=True)
+
         self._model_dir = model_dir
         self._summary = {}
 
