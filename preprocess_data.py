@@ -1,38 +1,38 @@
 import argparse
 import pandas as pd
-import re
+# import re
 from pathlib import Path
 from utils import Config
 
-
-def clean_str(string):
-    """
-    Tokenization/string cleaning for all datasets except for SST.
-    Every dataset is lower cased
-    """
-    string = re.sub(r"[^A-Za-z0-9(),!?\'\`]", " ", string)
-    string = re.sub(r"\'s", " \'s", string)
-    string = re.sub(r"\'ve", " \'ve", string)
-    string = re.sub(r"n\'t", " n\'t", string)
-    string = re.sub(r"\'re", " \'re", string)
-    string = re.sub(r"\'d", " \'d", string)
-    string = re.sub(r"\'ll", " \'ll", string)
-    string = re.sub(r",", " , ", string)
-    string = re.sub(r"!", " ! ", string)
-    string = re.sub(r"\(", " \( ", string)
-    string = re.sub(r"\)", " \) ", string)
-    string = re.sub(r"\?", " \? ", string)
-    string = re.sub(r"\s{2,}", " ", string)
-    return string.strip().lower()
-
-
-def clean_str_sst(string):
-    """
-    Tokenization/string cleaning for the SST dataset
-    """
-    string = re.sub(r"[^A-Za-z0-9(),!?\'\`]", " ", string)
-    string = re.sub(r"\s{2,}", " ", string)
-    return string.strip().lower()
+#
+# def clean_str(string, TREC=False):
+#     """
+#     Tokenization/string cleaning for all datasets except for SST.
+#     Every dataset is lower cased except for TREC
+#     """
+#     string = re.sub(r"[^A-Za-z0-9(),!?\'\`]", " ", string)
+#     string = re.sub(r"\'s", " \'s", string)
+#     string = re.sub(r"\'ve", " \'ve", string)
+#     string = re.sub(r"n\'t", " n\'t", string)
+#     string = re.sub(r"\'re", " \'re", string)
+#     string = re.sub(r"\'d", " \'d", string)
+#     string = re.sub(r"\'ll", " \'ll", string)
+#     string = re.sub(r",", " , ", string)
+#     string = re.sub(r"!", " ! ", string)
+#     string = re.sub(r"\(", " \( ", string)
+#     string = re.sub(r"\)", " \) ", string)
+#     string = re.sub(r"\?", " \? ", string)
+#     string = re.sub(r"\s{2,}", " ", string)
+#     return string.strip() if TREC else string.strip().lower()
+#
+#
+# def clean_str_sst(string):
+#     """
+#     Tokenization/string cleaning for the SST dataset
+#     """
+#     string = re.sub(r"[^A-Za-z0-9(),!?\'\`]", " ", string)
+#     string = re.sub(r"\s{2,}", " ", string)
+#     return string.strip().lower()
 
 
 parser = argparse.ArgumentParser(description="preprocessing specific dataset")
@@ -46,18 +46,19 @@ if __name__ == "__main__":
     dataset_dir = Path('.') / "dataset"
     data_dir = dataset_dir / args.data
     list_of_filepath = list(data_dir.iterdir())
-    preprocess_fn = clean_str_sst if 'sst' in args.data else clean_str
+    # preprocess_fn = clean_str_sst if 'sst' in args.data else clean_str
     dict_of_filepath = {}
 
     for filepath in list_of_filepath:
         with open(filepath, mode="rb") as io:
-            lisf_of_line = io.readlines()
+            list_of_sentences = io.readlines()
             data = []
 
-            for line in lisf_of_line:
+            for sentence in list_of_sentences:
                 try:
-                    label = int(line.decode("utf-8")[0])
-                    document = preprocess_fn(line.decode("utf-8")[2:])
+                    decoded_sentence = sentence.strip().decode("utf-8")
+                    label = int(decoded_sentence[0])
+                    document = decoded_sentence[2:]
                     data.append({"label": label, "document": document})
                 except UnicodeDecodeError:
                     continue

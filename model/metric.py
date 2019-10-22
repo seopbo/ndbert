@@ -14,7 +14,7 @@ def evaluate(model, data_loader, metrics, device):
         x_mb, y_mb = map(lambda elm: elm.to(device), mb)
 
         with torch.no_grad():
-            y_hat_mb, _ = model(x_mb)
+            y_hat_mb, _ = model(x_mb, False)
 
             for metric in metrics:
                 summary[metric] += metrics[metric](y_hat_mb, y_mb).item() * y_mb.size()[0]

@@ -20,7 +20,7 @@ parser.add_argument('--data_dir', default='trec', help="Directory containing con
 parser.add_argument('--restore_dir', default='experiments/trec', help="Directory containing config.json of model")
 parser.add_argument('--topk', default=10, type=int)
 
-args = argparse.Namespace(data_dir='trec', restore_dir='experiments/trec')
+
 if __name__ == '__main__':
     args = parser.parse_args()
     data_dir = Path('dataset') / args.data_dir

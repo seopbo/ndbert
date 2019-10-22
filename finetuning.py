@@ -16,33 +16,32 @@ from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--data_dir', default='trec', help="directory containing config.json of data")
+parser.add_argument('--data_dir', default='trec', help="directory containing config.json of data from dataset directory")
 parser.add_argument('--model_dir', default='experiments/trec', help="directory containing config.json of model")
 parser.add_argument('--pretrained', default='bert-base-uncased', help='pretrained weights of bert')
 
-args = argparse.Namespace(data_dir='trec', model_dir='experiments/trec',
-                          pretrained='bert-base-uncased')
+
 if __name__ == '__main__':
     args = parser.parse_args()
     data_dir = Path('dataset') / args.data_dir
     model_dir = Path(args.model_dir)
-    pretrained_dir = Path('pretrained')
+    ptr_dir = Path('pretrained')
     data_config = Config(data_dir / 'config.json')
     model_config = Config(model_dir / 'config.json')
 
     # tokenizer
-    ptr_tokenizer = BertTokenizer.from_pretrained(args.pretrained, do_lower_case=True)
-    vocab_filepath = pretrained_dir / '{}-vocab.pkl'.format(args.pretrained)
+    ptr_tokenizer = BertTokenizer.from_pretrained(args.pretrained, do_lower_case="uncased" in args.pretrained)
+    vocab_filepath = ptr_dir / '{}-vocab.pkl'.format(args.pretrained)
     with open(vocab_filepath, mode='rb') as io:
         vocab = pickle.load(io)
     pad_sequence = PadSequence(length=model_config.length, pad_val=vocab.to_indices(vocab.padding_token))
     preprocessor = PreProcessor(vocab=vocab, split_fn=ptr_tokenizer.tokenize, pad_fn=pad_sequence)
 
     # model
-    config_filepath = pretrained_dir / '{}-config.json'.format(args.pretrained)
-    config = BertConfig.from_pretrained(config_filepath, output_hidden_states=True)
+    config_filepath = ptr_dir / '{}-config.json'.format(args.pretrained)
+    config = BertConfig.from_pretrained(config_filepath, output_hidden_states=False)
     model = BertClassifier(config, num_classes=model_config.num_classes, vocab=preprocessor.vocab)
-    bert_checkpoint = torch.load(pretrained_dir / '{}-pytorch_model.bin'.format(args.pretrained))
+    bert_checkpoint = torch.load(ptr_dir / '{}-pytorch_model.bin'.format(args.pretrained))
     model.load_state_dict(bert_checkpoint, strict=False)
 
     # training
@@ -51,14 +50,16 @@ if __name__ == '__main__':
     val_ds = Corpus(data_config.test, preprocessor.preprocess)
     val_dl = DataLoader(val_ds, batch_size=model_config.batch_size)
 
-    # loss_fn = LSR(epsilon=.1, num_classes=model_config.num_classes)
-    loss_fn = nn.CrossEntropyLoss()
-    opt = Adam(
-        [
-            {"params": model.bert.parameters(), "lr": model_config.learning_rate},
-            {"params": model.classifier.parameters(), "lr": model_config.learning_rate},
 
-        ])
+    loss_fn = nn.CrossEntropyLoss()
+    opt = Adam(model.parameters(), lr=model_config.learning_rate)
+    # loss_fn = LSR(epsilon=.1, num_classes=model_config.num_classes)
+    # opt = Adam(
+    #     [
+    #         {"params": model.bert.parameters(), "lr": model_config.learning_rate / 100},
+    #         {"params": model.classifier.parameters(), "lr": model_config.learning_rate},
+    #
+    #     ])
 
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     model.to(device)
