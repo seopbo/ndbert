@@ -1,5 +1,0 @@
-{
-    "dev": "dataset/sst2/stsa.binary.dev.txt",
-    "test": "dataset/sst2/stsa.binary.test.txt",
-    "train": "dataset/sst2/stsa.binary.train.txt"
-}

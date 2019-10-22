@@ -50,16 +50,15 @@ if __name__ == '__main__':
     val_ds = Corpus(data_config.test, preprocessor.preprocess)
     val_dl = DataLoader(val_ds, batch_size=model_config.batch_size)
 
-
     loss_fn = nn.CrossEntropyLoss()
-    opt = Adam(model.parameters(), lr=model_config.learning_rate)
+    # opt = Adam(model.parameters(), lr=model_config.learning_rate)
     # loss_fn = LSR(epsilon=.1, num_classes=model_config.num_classes)
-    # opt = Adam(
-    #     [
-    #         {"params": model.bert.parameters(), "lr": model_config.learning_rate / 100},
-    #         {"params": model.classifier.parameters(), "lr": model_config.learning_rate},
-    #
-    #     ])
+    opt = Adam(
+        [
+            {"params": model.bert.parameters(), "lr": model_config.learning_rate / 100},
+            {"params": model.classifier.parameters(), "lr": model_config.learning_rate},
+
+        ])
 
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     model.to(device)
@@ -78,7 +77,7 @@ if __name__ == '__main__':
         for step, mb in tqdm(enumerate(tr_dl), desc='steps', total=len(tr_dl)):
             x_mb, y_mb = map(lambda elm: elm.to(device), mb)
             opt.zero_grad()
-            y_hat_mb, _ = model(x_mb, out_all_hidden_states=False)
+            y_hat_mb, _ = model(x_mb)
             mb_loss = loss_fn(y_hat_mb, y_mb)
             mb_loss.backward()
             opt.step()

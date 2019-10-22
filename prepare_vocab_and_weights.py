@@ -7,6 +7,7 @@ from transformers.tokenization_bert import BertTokenizer
 from transformers.modeling_bert import BERT_PRETRAINED_MODEL_ARCHIVE_MAP
 from transformers.configuration_bert import BERT_PRETRAINED_CONFIG_ARCHIVE_MAP
 
+
 parser = argparse.ArgumentParser(description="download pretrained-bert")
 parser.add_argument(
     "--model",
@@ -41,6 +42,7 @@ if __name__ == "__main__":
     ptr_tokenizer = BertTokenizer.from_pretrained(
         args.model, do_lower_case="uncased" in args.model
     )
+
     idx_to_token = list(ptr_tokenizer.vocab.keys())
     token_to_idx = {token: idx for idx, token in enumerate(idx_to_token)}
     vocab = Vocab(
