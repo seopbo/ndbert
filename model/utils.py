@@ -229,8 +229,9 @@ class PadSequence:
 class PreProcessor(Tokenizer):
     def preprocess(self, string):
         list_of_tokens = self.split(string)
-        if len(list_of_tokens) >= self._pad._length:
-            list_of_tokens = list_of_tokens[: (self._pad._length - 2)]
+        if self._pad:
+            if len(list_of_tokens) >= self._pad._length:
+                list_of_tokens = list_of_tokens[: (self._pad._length - 2)]
         list_of_tokens = ["[CLS]"] + list_of_tokens + ["[SEP]"]
         list_of_indices = self.transform(list_of_tokens)
         return list_of_indices

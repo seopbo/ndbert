@@ -10,7 +10,7 @@ from transformers.configuration_bert import BERT_PRETRAINED_CONFIG_ARCHIVE_MAP
 
 parser = argparse.ArgumentParser(description="download pretrained-bert")
 parser.add_argument(
-    "--model",
+    "--type",
     type=str,
     choices=[
         "bert-base-uncased",
@@ -24,23 +24,25 @@ parser.add_argument(
 
 if __name__ == "__main__":
     args = parser.parse_args()
-    save_dir = Path("pretrained")
+    ptr_dir = Path("pretrained")
+    if not ptr_dir.exists():
+        ptr_dir.mkdir(parents=True)
 
     # saving config of pretrained model
-    config_url = BERT_PRETRAINED_CONFIG_ARCHIVE_MAP.get(args.model)
+    config_url = BERT_PRETRAINED_CONFIG_ARCHIVE_MAP.get(args.type)
     config_filename = config_url.split("/")[-1]
-    config_filepath = save_dir / config_filename
+    config_filepath = ptr_dir / config_filename
 
     if not config_filepath.exists():
         urlretrieve(config_url, config_filepath)
     else:
         print("Already you have {}".format(config_filename))
 
-    print("Saving the config of {} is done.".format(args.model))
+    print("Saving the config of {} is done.".format(args.type))
 
     # saving vocab of pretrained model
     ptr_tokenizer = BertTokenizer.from_pretrained(
-        args.model, do_lower_case="uncased" in args.model
+        args.type, do_lower_case="uncased" in args.type
     )
 
     idx_to_token = list(ptr_tokenizer.vocab.keys())
@@ -54,8 +56,8 @@ if __name__ == "__main__":
         reserved_tokens=["[CLS]", "[SEP]", "[MASK]"],
         token_to_idx=token_to_idx,
     )
-    vocab_filename = "{}-vocab.pkl".format(args.model)
-    vocab_filepath = save_dir / vocab_filename
+    vocab_filename = "{}-vocab.pkl".format(args.type)
+    vocab_filepath = ptr_dir / vocab_filename
 
     if not vocab_filepath.exists():
         with open(vocab_filepath, mode="wb") as io:
@@ -63,16 +65,16 @@ if __name__ == "__main__":
     else:
         print("Already you have {}".format(vocab_filename))
 
-    print("Saving the vocab of {} is done.".format(args.model))
+    print("Saving the vocab of {} is done.".format(args.type))
 
     # saving weights of pretrained model
-    weights_url = BERT_PRETRAINED_MODEL_ARCHIVE_MAP.get(args.model)
+    weights_url = BERT_PRETRAINED_MODEL_ARCHIVE_MAP.get(args.type)
     weights_filename = weights_url.split("/")[-1]
-    weights_filepath = save_dir / weights_filename
+    weights_filepath = ptr_dir / weights_filename
 
     if not weights_filepath.exists():
         urlretrieve(weights_url, weights_filepath)
     else:
         print("Already you have {}".format(weights_filename))
 
-    print("Saving weights of {} is done.".format(args.model))
+    print("Saving weights of {} is done.".format(args.type))

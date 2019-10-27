@@ -12,7 +12,7 @@ class BertClassifier(BertPreTrainedModel):
         self.init_weights()
 
     def forward(self, input_ids):
-        # pooled_output is not same hidden vector corresponds to first token from last encoded layers
+        # pooled_output is not same hidden vector corresponds to first token from last encoded layer
         attention_mask = input_ids.ne(
             self.vocab.to_indices(self.vocab.padding_token)
         ).float()
