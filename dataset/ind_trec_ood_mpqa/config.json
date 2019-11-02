@@ -1,0 +1,8 @@
+{
+    "tr_ind": "dataset/ind_trec_ood_mpqa/tr_ind_3951.txt",
+    "dev_ind": "dataset/ind_trec_ood_mpqa/dev_ind_500.txt",
+    "val_ind": "dataset/ind_trec_ood_mpqa/val_ind_1500.txt",
+    "tr_ood": "dataset/ind_trec_ood_mpqa/tr_ood_8603.txt",
+    "dev_ood": "dataset/ind_trec_ood_mpqa/dev_ood_500.txt",
+    "val_ood": "dataset/ind_trec_ood_mpqa/val_ood_1500.txt"
+}
