@@ -1,4 +1,0 @@
-{
-    "train": "dataset/trec/TREC.train.all.txt",
-    "test": "dataset/trec/TREC.test.all.txt"
-}
