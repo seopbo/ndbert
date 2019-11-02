@@ -1,0 +1,8 @@
+{
+    "tr_ind": "dataset/ind_trec_ood_sst2/tr_ind_4451.txt",
+    "dev_ind": "dataset/ind_trec_ood_sst2/dev_ind_500.txt",
+    "val_ind": "dataset/ind_trec_ood_sst2/val_ind_1000.txt",
+    "tr_ood": "dataset/ind_trec_ood_sst2/tr_ood_8113.txt",
+    "dev_ood": "dataset/ind_trec_ood_sst2/dev_ood_500.txt",
+    "val_ood": "dataset/ind_trec_ood_sst2/val_ood_1000.txt"
+}
