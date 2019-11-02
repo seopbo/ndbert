@@ -22,8 +22,7 @@ parser.add_argument('--model_dir', default='experiments/ind_trec_ood_sst2',
 parser.add_argument("--type", default="bert-base-uncased", help="pretrained weights of bert")
 parser.add_argument('--topk', default=1, type=int)
 
-args = argparse.Namespace(data_dir='ind_trec_ood_sst2', model_dir='experiments/ind_trec_ood_sst2',
-                          topk=1, type='bert-base-uncased')
+
 if __name__ == '__main__':
     args = parser.parse_args()
     data_dir = Path("dataset") / args.data_dir

@@ -11,9 +11,9 @@ parser.add_argument('--ood', type=str, choices=["cr", "mpqa", "mr", "sst2", "sub
 parser.add_argument('--dev_ind_size', type=int)
 parser.add_argument('--val_ind_size', type=int)
 
-args = argparse.Namespace(ind='trec', ood='sst2', dev_ind_size=500, val_ind_size=1000)
 
 if __name__ == '__main__':
+    args = parser.parse_args()
     raw_dataset_dir = Path('raw_dataset')
     dataset_dir = Path('dataset')
 
@@ -30,6 +30,7 @@ if __name__ == '__main__':
         ind_all.append(pd.read_csv(ind_config.dict.get(key), sep='\t'))
     else:
         ind_all = pd.concat(ind_all, ignore_index=True, sort=False)
+        ind_all = ind_all[~ind_all['document'].isna()]
 
     ood_config = Config(ood_dir / 'config.json')
     ood_all = []
@@ -38,6 +39,7 @@ if __name__ == '__main__':
         ood_all.append(pd.read_csv(ood_config.dict.get(key), sep='\t'))
     else:
         ood_all = pd.concat(ood_all, ignore_index=True, sort=False)
+        ood_all = ood_all[~ood_all['document'].isna()]
 
     tr_ind, val_ind = train_test_split(ind_all, test_size=args.val_ind_size, random_state=777)
     tr_ind, dev_ind = train_test_split(tr_ind, test_size=args.dev_ind_size, random_state=777)
@@ -66,11 +68,11 @@ if __name__ == '__main__':
     val_ood.to_csv(val_ood_path, sep='\t', index=False)
 
     data_config = Config({'tr_ind': tr_ind_path,
-                     'dev_ind': dev_ind_path,
-                     'val_ind': val_ind_path,
-                     'tr_ood': tr_ood_path,
-                     'dev_ood': dev_ood_path,
-                     'val_ood': val_ood_path})
+                         'dev_ind': dev_ind_path,
+                         'val_ind': val_ind_path,
+                         'tr_ood': tr_ood_path,
+                         'dev_ood': dev_ood_path,
+                         'val_ood': val_ood_path})
     data_config.save(data_dir / 'config.json')
 
     experiment_dir = Path('experiments') / 'ind_{}_ood_{}'.format(args.ind, args.ood)
