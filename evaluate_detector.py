@@ -21,6 +21,7 @@ parser.add_argument('--model_dir', default='experiments/ind_trec_ood_sst2',
                     help="directory containing config.json of pretrained model")
 parser.add_argument("--type", default="bert-base-uncased", help="pretrained weights of bert")
 parser.add_argument('--topk', default=1, type=int)
+parser.add_argument("--nh", default=12, type=int, help="using hidden states of model from the last hidden state")
 
 
 if __name__ == '__main__':
@@ -49,7 +50,12 @@ if __name__ == '__main__':
     checkpoint_manager = CheckpointManager(model_dir)
     checkpoint = checkpoint_manager.load_checkpoint("best.tar")
     config_filepath = ptr_dir / "{}-config.json".format(args.type)
-    config = BertConfig.from_pretrained(config_filepath, output_hidden_states=True)
+
+    if args.nh == 1:
+        config = BertConfig.from_pretrained(config_filepath, output_hidden_states=False)
+    else:
+        config = BertConfig.from_pretrained(config_filepath, output_hidden_states=True)
+
     model = BertClassifier(
         config, num_classes=model_config.num_classes, vocab=preprocessor.vocab
     )
@@ -65,14 +71,19 @@ if __name__ == '__main__':
     val_ood_ds = Corpus(data_config.val_ood, preprocessor.preprocess)
     val_ood_dl = DataLoader(val_ood_ds, batch_size=128, num_workers=4)
 
-    with open(model_dir / 'feature_params.pkl', mode='rb') as io:
-        feature_params_all = pickle.load(io)
-    ops_indices = list(range(len(feature_params_all['mean'].keys())))
-
+    with open(model_dir / 'feature_params_{}.pkl'.format(args.nh), mode='rb') as io:
+        feature_params = pickle.load(io)
+    ops_indices = list(range(len(feature_params['mean'].keys())))
     ind_features = []
+
     for ops_idx in tqdm(ops_indices, total=len(ops_indices)):
-        layer_mean = torch.tensor(list(feature_params_all['mean'][ops_idx].values())).to(device)
-        layer_precision = torch.tensor(list(feature_params_all['precision'][ops_idx].values())).to(device)
+        if args.nh == 1:
+            layer_mean = torch.tensor(list(feature_params['mean'].values())).to(device)
+            layer_precision = torch.tensor(list(feature_params['precision'].values())).to(device)
+        else:
+            layer_mean = torch.tensor(list(feature_params['mean'][ops_idx].values())).to(device)
+            layer_precision = torch.tensor(list(feature_params['precision'][ops_idx].values())).to(device)
+
         mb_features = []
         for mb in tqdm(val_ind_dl, total=len(val_ind_dl)):
 
@@ -80,8 +91,13 @@ if __name__ == '__main__':
 
             with torch.no_grad():
                 _, encoded_layers = model(x_mb)
-                mb_features.extend(get_mcb_score(encoded_layers[ops_idx], layer_mean,
-                                                 layer_precision, topk=args.topk).cpu().numpy().tolist())
+
+                if args.nh == 1:
+                    mb_features.extend(get_mcb_score(encoded_layers, layer_mean,
+                                                     layer_precision, topk=args.topk).cpu().numpy().tolist())
+                else:
+                    mb_features.extend(get_mcb_score(encoded_layers[ops_idx], layer_mean,
+                                                     layer_precision, topk=args.topk).cpu().numpy().tolist())
         else:
             ind_features.append(mb_features)
     else:
@@ -89,9 +105,15 @@ if __name__ == '__main__':
         ind_label = np.zeros(ind_features.shape[0])
 
     ood_features = []
+
     for ops_idx in tqdm(ops_indices, total=len(ops_indices)):
-        layer_mean = torch.tensor(list(feature_params_all['mean'][ops_idx].values())).to(device)
-        layer_precision = torch.tensor(list(feature_params_all['precision'][ops_idx].values())).to(device)
+        if args.nh == 1:
+            layer_mean = torch.tensor(list(feature_params['mean'].values())).to(device)
+            layer_precision = torch.tensor(list(feature_params['precision'].values())).to(device)
+        else:
+            layer_mean = torch.tensor(list(feature_params['mean'][ops_idx].values())).to(device)
+            layer_precision = torch.tensor(list(feature_params['precision'][ops_idx].values())).to(device)
+
         mb_features = []
 
         for mb in tqdm(val_ood_dl, total=len(val_ood_dl)):
@@ -100,8 +122,13 @@ if __name__ == '__main__':
 
             with torch.no_grad():
                 _, encoded_layers = model(x_mb)
-                mb_features.extend(get_mcb_score(encoded_layers[ops_idx], layer_mean,
-                                                 layer_precision, topk=args.topk).cpu().numpy().tolist())
+
+                if args.nh == 1:
+                    mb_features.extend(get_mcb_score(encoded_layers, layer_mean,
+                                                     layer_precision, topk=args.topk).cpu().numpy().tolist())
+                else:
+                    mb_features.extend(get_mcb_score(encoded_layers[ops_idx], layer_mean,
+                                                     layer_precision, topk=args.topk).cpu().numpy().tolist())
         else:
             ood_features.append(mb_features)
     else:
@@ -111,7 +138,7 @@ if __name__ == '__main__':
     X = np.concatenate([ind_features, ood_features])
     y = np.concatenate([ind_label, ood_label])
 
-    with open(model_dir / 'detector_{}.pkl'.format(args.topk), mode='rb') as io:
+    with open(model_dir / 'detector_topk_{}_nh_{}.pkl'.format(args.topk, args.nh), mode='rb') as io:
         detector = pickle.load(io)
 
     X = detector['sc'].transform(X)
@@ -120,8 +147,9 @@ if __name__ == '__main__':
     lr_summary = classification_report(y, yhat,
                                        target_names=['val_ind', 'val_ood'], output_dict=True)
     lr_summary = dict(**lr_summary)
-    lr_summary = {'ood_validation_{}_{}'.format(args.topk, args.data_dir): lr_summary}
+    lr_summary = {'validation_{}'.format(args.data_dir): lr_summary}
+
     summary_manger = SummaryManager(model_dir)
     summary_manger.load('summary.json')
-    summary_manger.update(lr_summary)
+    summary_manger.summary['detector_topk_{}_nh_{}'.format(args.topk, args.nh)].update(lr_summary)
     summary_manger.save('summary.json')

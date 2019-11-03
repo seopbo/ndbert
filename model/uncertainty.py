@@ -30,12 +30,12 @@ def get_penultimate_feature_params(model, num_classes, data_loader, device, cov=
     return penultimate_feature_mean_each_class, penultimate_feature_precision_each_class
 
 
-def get_feature_params(model, num_classes, data_loader, device, cov=ShrunkCovariance()):
-    # 13개 feature에 대해서 각 feature의 mean과 precision을 계산
+def get_feature_params(model, num_classes, data_loader, num_layers_from_last, device, cov=ShrunkCovariance()):
+    # 12개 feature에 대해서 각 feature의 mean과 precision을 계산
     if model.training:
         model.eval()
 
-    ops_indices = list(range(13))
+    ops_indices = list(range(num_layers_from_last))
     layer_feature_per_class = {ops_idx: defaultdict(list) for ops_idx in ops_indices}
     layer_feature_mean_per_class = {ops_idx: defaultdict(float) for ops_idx in ops_indices}
     layer_feature_precision_per_class = {ops_idx: defaultdict(float) for ops_idx in ops_indices}
@@ -44,6 +44,7 @@ def get_feature_params(model, num_classes, data_loader, device, cov=ShrunkCovari
         x_mb, y_mb = map(lambda elm: elm.to(device), mb)
         with torch.no_grad():
             _, encoded_features = model(x_mb)
+            encoded_features[len(encoded_features) - num_layers_from_last:]
 
         for ops_idx in ops_indices:
 

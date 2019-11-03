@@ -21,10 +21,15 @@ class BertClassifier(BertPreTrainedModel):
         logits = self.classifier(pooled_output)
 
         if self.config.output_hidden_states:
+            # all_hidden_states = [
+            #     transformer_layer[:, 0, :] for transformer_layer in outputs[2][1:]
+            # ]
+            # all_hidden_states.append(pooled_output)
             all_hidden_states = [
-                transformer_layer[:, 0, :] for transformer_layer in outputs[2][1:]
+                transformer_layer[:, 0, :] for transformer_layer in outputs[2][:-1]
             ]
-            all_hidden_states.append(pooled_output)
+            # all_hidden_states.append(pooled_output)
+
             return logits, all_hidden_states
         else:
             return logits, outputs[0][:, 0, :]

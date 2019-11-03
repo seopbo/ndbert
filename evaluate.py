@@ -13,24 +13,14 @@ from model.metric import evaluate, acc
 from utils import Config, CheckpointManager, SummaryManager
 
 parser = argparse.ArgumentParser()
-parser.add_argument(
-    "--data_dir", default="ind_trec_ood_sst2", help="directory containing config.json of data"
-)
-parser.add_argument(
-    "--model_dir",
-    default="experiments/ind_trec_ood_sst2",
-    help="directory containing config.json of model",
-)
-parser.add_argument(
-    "--type", default="bert-base-uncased", help="pretrained weights of bert"
-)
-parser.add_argument(
-    "--data",
-    default="val_ind",
-    help="name of the data in_tagging --data_dir to be evaluate",
-)
+parser.add_argument("--data_dir", default="ind_trec_ood_sst2", help="directory containing config.json of data")
+parser.add_argument("--model_dir", default="experiments/ind_trec_ood_sst2",
+                    help="directory containing config.json of model")
+parser.add_argument("--type", default="bert-base-uncased", help="pretrained weights of bert")
+parser.add_argument("--data", default="val_ind", help="evaluating specific data")
 
-
+args = argparse.Namespace(data_dir='ind_trec_ood_cr', model_dir='experiments/ind_trec_ood_cr',
+                          type='bert-base-uncased', data='val_ind')
 if __name__ == "__main__":
     args = parser.parse_args()
     data_dir = Path("dataset") / args.data_dir

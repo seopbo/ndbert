@@ -18,19 +18,11 @@ from collections import OrderedDict
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument(
-    "--data_dir",
-    default="ind_trec_ood_sst2",
-    help="directory containing config.json of data from dataset directory",
-)
-parser.add_argument(
-    "--model_dir",
-    default="experiments/ind_trec_ood_sst2",
-    help="directory containing config.json of model",
-)
-parser.add_argument(
-    "--type", default="bert-base-uncased", help="pretrained weights of bert"
-)
+parser.add_argument("--data_dir", default="ind_trec_ood_sst2",
+                    help="directory containing config.json of data from dataset directory")
+parser.add_argument("--model_dir", default="experiments/ind_trec_ood_sst2",
+                    help="directory containing config.json of model")
+parser.add_argument("--type", default="bert-base-uncased", help="pretrained weights of bert")
 
 
 if __name__ == "__main__":
