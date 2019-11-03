@@ -15,7 +15,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--data_dir", default="ind_trec_ood_sst2", help="Directory containing config.json of data")
 parser.add_argument("--model_dir", default="experiments/ind_trec_ood_sst2",
                     help="Directory containing config.json of model")
-parser.add_argument("--data", default="tr_ind", help="Extracting params from specific data")
+parser.add_argument("--data", default="train_ind", help="Extracting params from specific data")
 parser.add_argument("--type", default="bert-base-uncased", help="pretrained weights of bert")
 parser.add_argument("--nh", default=12, type=int, help="using hidden states of model from the last hidden state")
 

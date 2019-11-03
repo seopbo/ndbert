@@ -65,7 +65,7 @@ if __name__ == "__main__":
     model.load_state_dict(bert_checkpoint, strict=False)
 
     # training
-    tr_ds = Corpus(data_config.tr_ind, preprocessor.preprocess)
+    tr_ds = Corpus(data_config.train_ind, preprocessor.preprocess)
     tr_dl = DataLoader(
         tr_ds,
         batch_size=model_config.batch_size,
@@ -152,7 +152,7 @@ if __name__ == "__main__":
                     "model_state_dict": model.state_dict(),
                     "opt_state_dict": opt.state_dict(),
                 }
-                summary = {"tr_ind": tr_summ, "dev_ind": dev_summ}
+                summary = {"train_ind": tr_summ, "dev_ind": dev_summ}
 
                 summary_manager.update(summary)
                 summary_manager.save("summary.json")

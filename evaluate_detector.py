@@ -66,10 +66,10 @@ if __name__ == '__main__':
     model.to(device)
 
     # evaluate detector
-    val_ind_ds = Corpus(data_config.val_ind, preprocessor.preprocess)
-    val_ind_dl = DataLoader(val_ind_ds, batch_size=128, num_workers=4)
-    val_ood_ds = Corpus(data_config.val_ood, preprocessor.preprocess)
-    val_ood_dl = DataLoader(val_ood_ds, batch_size=128, num_workers=4)
+    test_ind_ds = Corpus(data_config.test_ind, preprocessor.preprocess)
+    test_ind_dl = DataLoader(test_ind_ds, batch_size=128, num_workers=4)
+    test_ood_ds = Corpus(data_config.test_ood, preprocessor.preprocess)
+    test_ood_dl = DataLoader(test_ood_ds, batch_size=128, num_workers=4)
 
     with open(model_dir / 'feature_params_{}.pkl'.format(args.nh), mode='rb') as io:
         feature_params = pickle.load(io)
@@ -85,7 +85,7 @@ if __name__ == '__main__':
             layer_precision = torch.tensor(list(feature_params['precision'][ops_idx].values())).to(device)
 
         mb_features = []
-        for mb in tqdm(val_ind_dl, total=len(val_ind_dl)):
+        for mb in tqdm(test_ind_dl, total=len(test_ind_dl)):
 
             x_mb, _ = map(lambda elm: elm .to(device), mb)
 
@@ -116,7 +116,7 @@ if __name__ == '__main__':
 
         mb_features = []
 
-        for mb in tqdm(val_ood_dl, total=len(val_ood_dl)):
+        for mb in tqdm(test_ood_dl, total=len(test_ood_dl)):
 
             x_mb, _ = map(lambda elm: elm.to(device), mb)
 
@@ -145,9 +145,9 @@ if __name__ == '__main__':
     yhat = detector['lr'].predict(X)
 
     lr_summary = classification_report(y, yhat,
-                                       target_names=['val_ind', 'val_ood'], output_dict=True)
+                                       target_names=['test_ind', 'test_ood'], output_dict=True)
     lr_summary = dict(**lr_summary)
-    lr_summary = {'validation_{}'.format(args.data_dir): lr_summary}
+    lr_summary = {'test_{}'.format(args.data_dir): lr_summary}
 
     summary_manger = SummaryManager(model_dir)
     summary_manger.load('summary.json')

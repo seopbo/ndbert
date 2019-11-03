@@ -52,12 +52,12 @@ if __name__ == '__main__':
     if not data_dir.exists():
         data_dir.mkdir(parents=True)
 
-    tr_ind_path = str(data_dir / 'tr_ind_{}.txt'.format(len(tr_ind)))
+    tr_ind_path = str(data_dir / 'train_ind_{}.txt'.format(len(tr_ind)))
     dev_ind_path = str(data_dir / 'dev_ind_{}.txt'.format(len(dev_ind)))
-    val_ind_path = str(data_dir / 'val_ind_{}.txt'.format(len(val_ind)))
-    tr_ood_path = str(data_dir / 'tr_ood_{}.txt'.format(len(tr_ood)))
+    val_ind_path = str(data_dir / 'test_ind_{}.txt'.format(len(val_ind)))
+    tr_ood_path = str(data_dir / 'train_ood_{}.txt'.format(len(tr_ood)))
     dev_ood_path = str(data_dir / 'dev_ood_{}.txt'.format(len(dev_ood)))
-    val_ood_path = str(data_dir / 'val_ood_{}.txt'.format(len(val_ood)))
+    val_ood_path = str(data_dir / 'test_ood_{}.txt'.format(len(val_ood)))
 
     tr_ind.to_csv(tr_ind_path, sep='\t', index=False)
     dev_ind.to_csv(dev_ind_path, sep='\t', index=False)
@@ -67,12 +67,12 @@ if __name__ == '__main__':
     dev_ood.to_csv(dev_ood_path, sep='\t', index=False)
     val_ood.to_csv(val_ood_path, sep='\t', index=False)
 
-    data_config = Config({'tr_ind': tr_ind_path,
+    data_config = Config({'train_ind': tr_ind_path,
                          'dev_ind': dev_ind_path,
-                         'val_ind': val_ind_path,
-                         'tr_ood': tr_ood_path,
+                         'test_ind': val_ind_path,
+                         'train_ood': tr_ood_path,
                          'dev_ood': dev_ood_path,
-                         'val_ood': val_ood_path})
+                         'test_ood': val_ood_path})
     data_config.save(data_dir / 'config.json')
 
     experiment_dir = Path('experiments') / 'ind_{}_ood_{}'.format(args.ind, args.ood)
