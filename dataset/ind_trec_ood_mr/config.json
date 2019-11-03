@@ -1,8 +1,8 @@
 {
-    "tr_ind": "dataset/ind_trec_ood_mr/tr_ind_3451.txt",
+    "train_ind": "dataset/ind_trec_ood_mr/train_ind_3451.txt",
     "dev_ind": "dataset/ind_trec_ood_mr/dev_ind_500.txt",
-    "val_ind": "dataset/ind_trec_ood_mr/val_ind_2000.txt",
-    "tr_ood": "dataset/ind_trec_ood_mr/tr_ood_7960.txt",
+    "test_ind": "dataset/ind_trec_ood_mr/test_ind_2000.txt",
+    "train_ood": "dataset/ind_trec_ood_mr/train_ood_7960.txt",
     "dev_ood": "dataset/ind_trec_ood_mr/dev_ood_500.txt",
-    "val_ood": "dataset/ind_trec_ood_mr/val_ood_2000.txt"
+    "test_ood": "dataset/ind_trec_ood_mr/test_ood_2000.txt"
 }

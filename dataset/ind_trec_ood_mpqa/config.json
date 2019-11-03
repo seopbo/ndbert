@@ -1,8 +1,8 @@
 {
-    "tr_ind": "dataset/ind_trec_ood_mpqa/tr_ind_3451.txt",
+    "train_ind": "dataset/ind_trec_ood_mpqa/train_ind_3451.txt",
     "dev_ind": "dataset/ind_trec_ood_mpqa/dev_ind_500.txt",
-    "val_ind": "dataset/ind_trec_ood_mpqa/val_ind_2000.txt",
-    "tr_ood": "dataset/ind_trec_ood_mpqa/tr_ood_8103.txt",
+    "test_ind": "dataset/ind_trec_ood_mpqa/test_ind_2000.txt",
+    "train_ood": "dataset/ind_trec_ood_mpqa/train_ood_8103.txt",
     "dev_ood": "dataset/ind_trec_ood_mpqa/dev_ood_500.txt",
-    "val_ood": "dataset/ind_trec_ood_mpqa/val_ood_2000.txt"
+    "test_ood": "dataset/ind_trec_ood_mpqa/test_ood_2000.txt"
 }
