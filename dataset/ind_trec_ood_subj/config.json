@@ -1,8 +1,8 @@
 {
-    "tr_ind": "dataset/ind_trec_ood_subj/tr_ind_3951.txt",
+    "tr_ind": "dataset/ind_trec_ood_subj/tr_ind_3451.txt",
     "dev_ind": "dataset/ind_trec_ood_subj/dev_ind_500.txt",
-    "val_ind": "dataset/ind_trec_ood_subj/val_ind_1500.txt",
-    "tr_ood": "dataset/ind_trec_ood_subj/tr_ood_7887.txt",
+    "val_ind": "dataset/ind_trec_ood_subj/val_ind_2000.txt",
+    "tr_ood": "dataset/ind_trec_ood_subj/tr_ood_7387.txt",
     "dev_ood": "dataset/ind_trec_ood_subj/dev_ood_500.txt",
-    "val_ood": "dataset/ind_trec_ood_subj/val_ood_1500.txt"
+    "val_ood": "dataset/ind_trec_ood_subj/val_ood_2000.txt"
 }
