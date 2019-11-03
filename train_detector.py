@@ -148,8 +148,6 @@ if __name__ == '__main__':
 
     lr_summary = classification_report(y, y_hat, target_names=['dev_ind', 'dev_ood'], output_dict=True)
     lr_summary = dict(**lr_summary)
-    # lr_summary = {'ood_training_topk_{}_nh_{}'.format(args.topk, args.nh): lr_summary}
-
     lr_summary = {'detector_topk_{}_nh_{}'.format(args.topk, args.nh): {'training_{}'.format(args.data_dir):
                                                                         lr_summary}}
     summary_manger = SummaryManager(model_dir)

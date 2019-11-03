@@ -16,6 +16,10 @@ from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
 from collections import OrderedDict
 
+# for reproducibility
+torch.manual_seed(777)
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--data_dir", default="ind_trec_ood_sst2",
