@@ -143,12 +143,12 @@ if __name__ == '__main__':
     sc = StandardScaler().fit(X)
     X = sc.transform(X)
 
-    detector = LogisticRegression(random_state=777, max_iter=1000).fit(X, y)
+    detector = LogisticRegression(random_state=777, max_iter=1000, solver='lbfgs').fit(X, y)
     y_hat = detector.predict(X)
 
-    lr_summary = classification_report(y, y_hat, target_names=['dev_ind', 'dev_ood'], output_dict=True)
+    lr_summary = classification_report(y, y_hat, target_names=['ind', 'ood'], output_dict=True)
     lr_summary = dict(**lr_summary)
-    lr_summary = {'detector_topk_{}_nh_{}'.format(args.topk, args.nh): {'training_{}'.format(args.data_dir):
+    lr_summary = {'detector_topk_{}_nh_{}'.format(args.topk, args.nh): {'dev_{}'.format(args.data_dir):
                                                                         lr_summary}}
     summary_manger = SummaryManager(model_dir)
     summary_manger.load('summary.json')

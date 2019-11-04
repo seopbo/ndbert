@@ -145,7 +145,7 @@ if __name__ == '__main__':
     yhat = detector['lr'].predict(X)
 
     lr_summary = classification_report(y, yhat,
-                                       target_names=['test_ind', 'test_ood'], output_dict=True)
+                                       target_names=['ind', 'ood'], output_dict=True)
     lr_summary = dict(**lr_summary)
     lr_summary = {'test_{}'.format(args.data_dir): lr_summary}
 
