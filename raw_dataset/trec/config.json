@@ -1,0 +1,4 @@
+{
+    "train": "raw_dataset/trec/TREC.train.all.txt",
+    "test": "raw_dataset/trec/TREC.test.all.txt"
+}

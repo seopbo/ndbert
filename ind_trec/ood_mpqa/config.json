@@ -1,0 +1,5 @@
+{
+    "train_ood": "ind_trec/ood_mpqa/train_ood_8103.txt",
+    "dev_ood": "ind_trec/ood_mpqa/dev_ood_500.txt",
+    "test_ood": "ind_trec/ood_mpqa/test_ood_2000.txt"
+}

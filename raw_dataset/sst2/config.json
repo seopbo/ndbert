@@ -1,0 +1,5 @@
+{
+    "test": "raw_dataset/sst2/stsa.binary.test.txt",
+    "train": "raw_dataset/sst2/stsa.binary.train.txt",
+    "dev": "raw_dataset/sst2/stsa.binary.dev.txt"
+}
