@@ -12,17 +12,17 @@ from model.uncertainty import get_feature_params, get_penultimate_feature_params
 from utils import Config, CheckpointManager
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--par_dir", default="ind_trec",
-                    help="directory containing config.json of data from dataset directory")
-parser.add_argument("--data", default="train_ind", help="Extracting params from specific data")
+parser.add_argument("--ind", default="trec",
+                    help="directory of in distribution is not sub-directory")
+parser.add_argument("--data", default="train", help="Extracting params from specific data")
 parser.add_argument("--type", default="bert-base-uncased", help="pretrained weights of bert")
 parser.add_argument("--nh", default=12, type=int, help="using hidden states of model from the last hidden state")
 
 
 if __name__ == "__main__":
     args = parser.parse_args()
-    par_dir = Path(args.par_dir)
-    backbone_dir = Path('experiments') / args.par_dir
+    par_dir = Path(args.ind)
+    backbone_dir = Path('experiments') / args.ind
     ptr_dir = Path("pretrained")
     data_config = Config(par_dir / "config.json")
     model_config = Config(backbone_dir / "config.json")

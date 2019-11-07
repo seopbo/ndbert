@@ -23,15 +23,15 @@ torch.backends.cudnn.benchmark = False
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--par_dir", default="ind_trec",
-                    help="directory containing config.json of data from dataset directory")
+parser.add_argument("--ind", default="trec",
+                    help="directory of in distribution is not sub-directory")
 parser.add_argument("--type", default="bert-base-uncased", help="pretrained weights of bert")
 
 
 if __name__ == "__main__":
     args = parser.parse_args()
-    par_dir = Path(args.par_dir)
-    backbone_dir = Path('experiments') / args.par_dir
+    par_dir = Path(args.ind)
+    backbone_dir = Path('experiments') / args.ind
     ptr_dir = Path("pretrained")
     data_config = Config(par_dir / "config.json")
     model_config = Config(backbone_dir / "config.json")
@@ -64,7 +64,7 @@ if __name__ == "__main__":
     model.load_state_dict(bert_checkpoint, strict=False)
 
     # training
-    tr_ds = Corpus(data_config.train_ind, preprocessor.preprocess)
+    tr_ds = Corpus(data_config.train, preprocessor.preprocess)
     tr_dl = DataLoader(
         tr_ds,
         batch_size=model_config.batch_size,
@@ -72,7 +72,7 @@ if __name__ == "__main__":
         num_workers=4,
         drop_last=True,
     )
-    dev_ds = Corpus(data_config.dev_ind, preprocessor.preprocess)
+    dev_ds = Corpus(data_config.dev, preprocessor.preprocess)
     dev_dl = DataLoader(dev_ds, batch_size=model_config.batch_size, num_workers=4)
 
     loss_fn = nn.CrossEntropyLoss()
@@ -151,7 +151,7 @@ if __name__ == "__main__":
                     "model_state_dict": model.state_dict(),
                     "opt_state_dict": opt.state_dict(),
                 }
-                summary = {"train_ind": tr_summ, "dev_ind": dev_summ}
+                summary = {"train": tr_summ, "dev": dev_summ}
 
                 summary_manager.update(summary)
                 summary_manager.save("summary.json")

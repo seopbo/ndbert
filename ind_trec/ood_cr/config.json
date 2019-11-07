@@ -1,5 +1,0 @@
-{
-    "train_ood": "ind_trec/ood_cr/train_ood_1271.txt",
-    "dev_ood": "ind_trec/ood_cr/dev_ood_500.txt",
-    "test_ood": "ind_trec/ood_cr/test_ood_2000.txt"
-}

@@ -10,29 +10,36 @@ from model.net import BertClassifier
 from model.data import Corpus
 from model.utils import PreProcessor, PadSequence
 from model.uncertainty import get_mcb_score
-from sklearn.metrics import classification_report
+from sklearn.metrics import precision_score, f1_score, recall_score
 from tqdm import tqdm
 from utils import Config, CheckpointManager, SummaryManager
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--par_dir", default="ind_trec")
-parser.add_argument("--sub_dir", default="ood_cr")
-parser.add_argument("--tgt_dir", default='ood_cr')
+parser.add_argument("--ind", default="trec",
+                    help="directory of in distribution is not sub-directory")
+parser.add_argument("--ood", default="cr",
+                    help="directory of out of distribution is sub-directory from directory of in distribution")
+parser.add_argument("--tgt", default='cr')
 parser.add_argument("--type", default="bert-base-uncased", help="pretrained weights of bert")
 parser.add_argument('--topk', default=1, type=int)
-parser.add_argument("--nh", default=12, type=int, help="using hidden states of model from the last hidden state")
+parser.add_argument('--nh', default=12, type=int, help="using hidden states of model from the last hidden state")
+parser.add_argument('--data', default="test", help="predicting specific data")
 
 
 if __name__ == '__main__':
     args = parser.parse_args()
-    par_dir = Path(args.par_dir)
-    sub_dir = par_dir / args.sub_dir
-    tgt_dir = par_dir / args.tgt_dir
-    backbone_dir = Path('experiments') / args.par_dir
-    detector_dir = backbone_dir / args.sub_dir
+    par_dir = Path(args.ind)
+    sub_dir = par_dir / args.ood
+
+    if args.tgt == args.ind:
+        tgt_dir = par_dir
+    else:
+        tgt_dir = par_dir / args.tgt
+
+    backbone_dir = Path('experiments') / args.ind
+    detector_dir = backbone_dir / args.ood
     ptr_dir = Path("pretrained")
-    par_config = Config(par_dir / "config.json")
     tgt_config = Config(tgt_dir / 'config.json')
     model_config = Config(backbone_dir / "config.json")
 
@@ -70,15 +77,14 @@ if __name__ == '__main__':
     model.to(device)
 
     # evaluate detector
-    test_ind_ds = Corpus(par_config.test_ind, preprocessor.preprocess)
-    test_ind_dl = DataLoader(test_ind_ds, batch_size=128, num_workers=4)
-    test_ood_ds = Corpus(tgt_config.test_ood, preprocessor.preprocess)
-    test_ood_dl = DataLoader(test_ood_ds, batch_size=128, num_workers=4)
+    filepath = getattr(tgt_config, args.data)
+    ds = Corpus(filepath, preprocessor.preprocess)
+    dl = DataLoader(ds, batch_size=128, num_workers=4)
 
     with open(backbone_dir / 'feature_params_{}.pkl'.format(args.nh), mode='rb') as io:
         feature_params = pickle.load(io)
     ops_indices = list(range(len(feature_params['mean'].keys())))
-    ind_features = []
+    features = []
 
     for ops_idx in tqdm(ops_indices, total=len(ops_indices)):
         if args.nh == 1:
@@ -89,7 +95,7 @@ if __name__ == '__main__':
             layer_precision = torch.tensor(list(feature_params['precision'][ops_idx].values())).to(device)
 
         mb_features = []
-        for mb in tqdm(test_ind_dl, total=len(test_ind_dl)):
+        for mb in tqdm(dl, total=len(dl)):
 
             x_mb, _ = map(lambda elm: elm .to(device), mb)
 
@@ -103,55 +109,23 @@ if __name__ == '__main__':
                     mb_features.extend(get_mcb_score(encoded_layers[ops_idx], layer_mean,
                                                      layer_precision, topk=args.topk).cpu().numpy().tolist())
         else:
-            ind_features.append(mb_features)
+            features.append(mb_features)
     else:
-        ind_features = np.concatenate(ind_features, axis=1)
-        ind_label = np.zeros(ind_features.shape[0])
-
-    ood_features = []
-    for ops_idx in tqdm(ops_indices, total=len(ops_indices)):
-        if args.nh == 1:
-            layer_mean = torch.tensor(list(feature_params['mean'].values())).to(device)
-            layer_precision = torch.tensor(list(feature_params['precision'].values())).to(device)
-        else:
-            layer_mean = torch.tensor(list(feature_params['mean'][ops_idx].values())).to(device)
-            layer_precision = torch.tensor(list(feature_params['precision'][ops_idx].values())).to(device)
-
-        mb_features = []
-
-        for mb in tqdm(test_ood_dl, total=len(test_ood_dl)):
-
-            x_mb, _ = map(lambda elm: elm.to(device), mb)
-
-            with torch.no_grad():
-                _, encoded_layers = model(x_mb)
-
-                if args.nh == 1:
-                    mb_features.extend(get_mcb_score(encoded_layers, layer_mean,
-                                                     layer_precision, topk=args.topk).cpu().numpy().tolist())
-                else:
-                    mb_features.extend(get_mcb_score(encoded_layers[ops_idx], layer_mean,
-                                                     layer_precision, topk=args.topk).cpu().numpy().tolist())
-        else:
-            ood_features.append(mb_features)
-    else:
-        ood_features = np.concatenate(ood_features, axis=1)
-        ood_label = np.ones(ood_features.shape[0])
+        features = np.concatenate(features, axis=1)
+        label = np.zeros(features.shape[0]) if args.ind == args.tgt else np.ones(features.shape[0])
 
     with open(detector_dir / 'detector_topk_{}_nh_{}.pkl'.format(args.topk, args.nh), mode='rb') as io:
         detector = pickle.load(io)
 
-    X = np.concatenate([ind_features, ood_features])
-    y = np.concatenate([ind_label, ood_label])
-
-    yhat = detector['lr'].predict(X)
-
-    lr_summary = classification_report(y, yhat, target_names=['ind', 'ood'], output_dict=True)
-    lr_summary = dict(**lr_summary)
-    lr_summary = {'test_{}'.format(args.par_dir + '_' + args.tgt_dir): lr_summary}
+    yhat = detector['lr'].predict(features)
+    lr_summary = {'precision': precision_score(label, yhat, pos_label=0 if args.ind == args.tgt else 1),
+                  'recall': recall_score(label, yhat, pos_label=0 if args.ind == args.tgt else 1),
+                  'f1-score': f1_score(label, yhat, pos_label=0 if args.ind == args.tgt else 1),
+                  'support': len(ds)}
+    lr_summary = {'{}_{}'.format(args.data, args.tgt): lr_summary}
 
     summary_manger = SummaryManager(backbone_dir)
     summary_manger.load('summary.json')
-    summary_manger.summary['{}_{}_topk_{}_nh_{}'.format(args.par_dir,
-                                                        args.tgt_dir, args.topk, args.nh)].update(lr_summary)
+    summary_manger.summary['{}_{}_topk_{}_nh_{}'.format(args.ind,
+                                                        args.ood, args.topk, args.nh)].update(lr_summary)
     summary_manger.save('summary.json')

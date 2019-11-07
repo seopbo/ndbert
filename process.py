@@ -13,29 +13,27 @@ if __name__ == '__main__':
     args = parser.parse_args()
     list_of_data = ['cr', 'mpqa', 'mr', 'sst2', 'subj', 'trec']
 
-    call('python train.py --par_dir ind_{} --type {}'.format(args.ind, args.type), shell=True)
-    call('python evaluate.py --par_dir ind_{} --type {} --data train_ind'.format(
-        args.ind, args.type), shell=True)
-    call('python evaluate.py --par_dir ind_{} --type {} --data test_ind'.format(
-        args.ind, args.type), shell=True)
+    call('python train.py --ind {} --type {}'.format(args.ind, args.type), shell=True)
+    call('python evaluate.py --ind {} --type {} --data train'.format(args.ind, args.type), shell=True)
+    call('python evaluate.py --ind {} --type {} --data test'.format(args.ind, args.type), shell=True)
 
-    for nh in args.nhs:
-        call('python extract_params.py --par_dir ind_{} --type {} --nh {}'.format(args.ind, args.type, nh), shell=True)
+    for nh in args.nh:
+        call('python extract_params.py --ind {} --type {} --nh {}'.format(args.ind, args.type, nh), shell=True)
 
     count = 1
-    for sub_dir in list_of_data:
-        if sub_dir == args.ind:
+    for ood in list_of_data:
+        if ood == args.ind:
             continue
 
         for comb in product(args.topk, args.nh):
-            call('python train_detector.py --par_dir ind_{} --sub_dir ood_{} --type {} --topk {} --nh {}'.format(
-                args.ind, sub_dir, args.type, comb[0], comb[1]), shell=True)
+            call('python train_detector.py --ind {} --ood {} --type {} --topk {} --nh {}'.format(
+                args.ind, ood, args.type, comb[0], comb[1]), shell=True)
 
-            for tgt_dir in list_of_data:
-                if tgt_dir == args.ind:
-                    continue
+            for tgt in list_of_data:
 
-                call('python evaluate_detector.py --par_dir ind_{} --sub_dir ood_{} --tgt_dir ood_{} --type {} --topk {}'
-                     ' --nh {}'.format(args.ind, sub_dir, tgt_dir, args.type, comb[0], comb[1]), shell=True)
+                call('python evaluate_detector.py --ind {} --ood {} --tgt {} --type {} --topk {}'
+                     ' --nh {}'.format(args.ind, ood, tgt, args.type, comb[0], comb[1]), shell=True)
                 count += 1
                 print(count)
+
+    call('python synthesize_experiment --ind {}'.format(args.ind), shell=True)

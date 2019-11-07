@@ -15,7 +15,7 @@ parser.add_argument('--val_ind_size', type=int, default=2000)
 if __name__ == '__main__':
     args = parser.parse_args()
     raw_dataset_dir = Path('raw_dataset')
-    par_dir = Path('ind_{}'.format(args.ind))
+    par_dir = Path('{}'.format(args.ind))
 
     if not par_dir.exists():
         par_dir.mkdir(parents=True)
@@ -47,7 +47,7 @@ if __name__ == '__main__':
     tr_ood, val_ood = train_test_split(ood_all, test_size=args.val_ind_size, random_state=777)
     tr_ood, dev_ood = train_test_split(tr_ood, test_size=args.dev_ind_size, random_state=777)
 
-    sub_dir = par_dir / 'ood_{}'.format(args.ood)
+    sub_dir = par_dir / '{}'.format(args.ood)
 
     if not sub_dir.exists():
         sub_dir.mkdir(parents=True)
@@ -67,17 +67,17 @@ if __name__ == '__main__':
     dev_ood.to_csv(dev_ood_path, sep='\t', index=False)
     val_ood.to_csv(val_ood_path, sep='\t', index=False)
 
-    par_config = Config({'train_ind': tr_ind_path,
-                         'dev_ind': dev_ind_path,
-                         'test_ind': val_ind_path})
+    par_config = Config({'train': tr_ind_path,
+                         'dev': dev_ind_path,
+                         'test': val_ind_path})
     par_config.save(par_dir / 'config.json')
 
-    sub_config = Config({'train_ood': tr_ood_path,
-                          'dev_ood': dev_ood_path,
-                          'test_ood': val_ood_path})
+    sub_config = Config({'train': tr_ood_path,
+                         'dev': dev_ood_path,
+                         'test': val_ood_path})
     sub_config.save(sub_dir / 'config.json')
 
-    experiment_dir = Path('experiments') / 'ind_{}'.format(args.ind) / 'ood_{}'.format(args.ood)
+    experiment_dir = Path('experiments') / '{}'.format(args.ind) / '{}'.format(args.ood)
 
     if not experiment_dir.exists():
         experiment_dir.mkdir(parents=True)

@@ -16,10 +16,10 @@ from tqdm import tqdm
 from utils import Config, CheckpointManager, SummaryManager
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--par_dir", default="ind_trec",
-                    help="directory containing config.json of data from dataset directory")
-parser.add_argument("--sub_dir", default="ood_cr",
-                    help="directory containing config.json of data from dataset directory")
+parser.add_argument("--ind", default="trec",
+                    help="directory of in distribution is not sub-directory")
+parser.add_argument("--ood", default="cr",
+                    help="directory of out of distribution is sub-directory from directory of in distribution")
 parser.add_argument("--type", default="bert-base-uncased", help="pretrained weights of bert")
 parser.add_argument('--topk', default=1, type=int)
 parser.add_argument("--nh", default=12, type=int, help="using hidden states of model from the last hidden state")
@@ -27,10 +27,10 @@ parser.add_argument("--nh", default=12, type=int, help="using hidden states of m
 
 if __name__ == '__main__':
     args = parser.parse_args()
-    par_dir = Path(args.par_dir)
-    sub_dir = par_dir / args.sub_dir
-    backbone_dir = Path('experiments') / args.par_dir
-    detector_dir = backbone_dir / args.sub_dir
+    par_dir = Path(args.ind)
+    sub_dir = par_dir / args.ood
+    backbone_dir = Path('experiments') / args.ind
+    detector_dir = backbone_dir / args.ood
     ptr_dir = Path("pretrained")
     par_config = Config(par_dir / "config.json")
     sub_config = Config(sub_dir / "config.json")
@@ -69,9 +69,9 @@ if __name__ == '__main__':
     model.to(device)
 
     # train detector
-    dev_ind_ds = Corpus(par_config.dev_ind, preprocessor.preprocess)
+    dev_ind_ds = Corpus(par_config.dev, preprocessor.preprocess)
     dev_ind_dl = DataLoader(dev_ind_ds, batch_size=128, num_workers=4)
-    dev_ood_ds = Corpus(sub_config.dev_ood, preprocessor.preprocess)
+    dev_ood_ds = Corpus(sub_config.dev, preprocessor.preprocess)
     dev_ood_dl = DataLoader(dev_ood_ds, batch_size=128, num_workers=4)
 
     with open(backbone_dir / 'feature_params_{}.pkl'.format(args.nh), mode='rb') as io:
@@ -143,13 +143,13 @@ if __name__ == '__main__':
     X = np.concatenate([ind_features, ood_features])
     y = np.concatenate([ind_label, ood_label])
 
-    detector = LogisticRegression(random_state=777, max_iter=1000, solver='lbfgs').fit(X, y)
+    detector = LogisticRegression(random_state=777, max_iter=2000, solver='lbfgs').fit(X, y)
     y_hat = detector.predict(X)
-
-    lr_summary = classification_report(y, y_hat, target_names=['ind', 'ood'], output_dict=True)
-    lr_summary = dict(**lr_summary)
-    lr_summary = {'{}_{}_topk_{}_nh_{}'.format(args.par_dir, args.sub_dir, args.topk, args.nh):
-                      {'dev_{}'.format(args.par_dir + '_' + args.sub_dir): lr_summary}}
+    lr_summary = classification_report(y, y_hat, target_names=[args.ind, args.ood], output_dict=True)
+    lr_summary = {'accuracy': lr_summary['accuracy'],
+                  'dev_{}'.format(args.ind): lr_summary[args.ind],
+                  'dev_{}'.format(args.ood): lr_summary[args.ood]}
+    lr_summary = {'{}_{}_topk_{}_nh_{}'.format(args.ind, args.ood, args.topk, args.nh): lr_summary}
 
     summary_manger = SummaryManager(backbone_dir)
     summary_manger.load('summary.json')
