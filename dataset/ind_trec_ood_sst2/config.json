@@ -1,8 +1,0 @@
-{
-    "train_ind": "dataset/ind_trec_ood_sst2/train_ind_3451.txt",
-    "dev_ind": "dataset/ind_trec_ood_sst2/dev_ind_500.txt",
-    "test_ind": "dataset/ind_trec_ood_sst2/test_ind_2000.txt",
-    "train_ood": "dataset/ind_trec_ood_sst2/train_ood_7113.txt",
-    "dev_ood": "dataset/ind_trec_ood_sst2/dev_ood_500.txt",
-    "test_ood": "dataset/ind_trec_ood_sst2/test_ood_2000.txt"
-}
