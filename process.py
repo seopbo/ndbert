@@ -19,7 +19,6 @@ if __name__ == '__main__':
     call('python evaluate.py --par_dir ind_{} --type {} --data test_ind'.format(
         args.ind, args.type), shell=True)
 
-
     for nh in args.nhs:
         call('python extract_params.py --par_dir ind_{} --type {} --nh {}'.format(args.ind, args.type, nh), shell=True)
 
