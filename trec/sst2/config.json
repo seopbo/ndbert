@@ -1,5 +1,5 @@
 {
-    "train": "trec/sst2/train_ood_7113.txt",
-    "dev": "trec/sst2/dev_ood_500.txt",
+    "train": "trec/sst2/train_ood_6613.txt",
+    "dev": "trec/sst2/dev_ood_1000.txt",
     "test": "trec/sst2/test_ood_2000.txt"
 }

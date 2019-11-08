@@ -9,8 +9,9 @@ from transformers.tokenization_bert import BertTokenizer
 from model.net import BertClassifier
 from model.data import Corpus
 from model.utils import PreProcessor, PadSequence
-from model.metric import evaluate, acc
+from model.metric import evaluate, acc, LSR
 from utils import Config, CheckpointManager, SummaryManager
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--ind", default="trec",
@@ -59,7 +60,9 @@ if __name__ == "__main__":
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     model.to(device)
 
-    summ = evaluate(model, dl, {"loss": nn.CrossEntropyLoss(), "acc": acc}, device)
+    loss_fn = nn.CrossEntropyLoss()
+
+    summ = evaluate(model, dl, {"loss": loss_fn, "acc": acc}, device)
 
     summary_manager = SummaryManager(backbone_dir)
     summary_manager.load("summary.json")

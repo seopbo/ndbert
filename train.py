@@ -10,7 +10,7 @@ from transformers.tokenization_bert import BertTokenizer
 from model.net import BertClassifier
 from model.data import Corpus
 from model.utils import PreProcessor, PadSequence
-from model.metric import evaluate, acc
+from model.metric import evaluate, acc, LSR
 from utils import Config, CheckpointManager, SummaryManager, replace_key
 from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
@@ -76,6 +76,7 @@ if __name__ == "__main__":
     dev_dl = DataLoader(dev_ds, batch_size=model_config.batch_size, num_workers=4)
 
     loss_fn = nn.CrossEntropyLoss()
+
     opt = optim.Adam(
         [
             {"params": model.bert.parameters(), "lr": model_config.learning_rate / 100},

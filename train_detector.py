@@ -145,6 +145,7 @@ if __name__ == '__main__':
 
     detector = LogisticRegression(random_state=777, max_iter=2000, solver='lbfgs').fit(X, y)
     y_hat = detector.predict(X)
+
     lr_summary = classification_report(y, y_hat, target_names=[args.ind, args.ood], output_dict=True)
     lr_summary = {'accuracy': lr_summary['accuracy'],
                   'dev_{}'.format(args.ind): lr_summary[args.ind],

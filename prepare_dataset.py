@@ -8,7 +8,7 @@ from sklearn.model_selection import train_test_split
 parser = argparse.ArgumentParser()
 parser.add_argument('--ind', type=str, choices=["cr", "mpqa", "mr", "sst2", "subj", "trec"])
 parser.add_argument('--ood', type=str, choices=["cr", "mpqa", "mr", "sst2", "subj", "trec"])
-parser.add_argument('--dev_ind_size', type=int, default=500)
+parser.add_argument('--dev_ind_size', type=int, default=1000)
 parser.add_argument('--test_ind_size', type=int, default=2000)
 
 
