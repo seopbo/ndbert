@@ -22,7 +22,7 @@ parser.add_argument("--ood", default="cr",
                     help="directory of out of distribution is sub-directory from directory of in distribution")
 parser.add_argument("--type", default="bert-base-uncased", help="pretrained weights of bert")
 parser.add_argument('--topk', default=1, type=int)
-parser.add_argument("--nh", default=12, type=int, help="using hidden states of model from the last hidden state")
+parser.add_argument("--nh", default=14, type=int, help="using hidden states of model from the pooled output")
 
 
 if __name__ == '__main__':
@@ -149,12 +149,13 @@ if __name__ == '__main__':
     lr_summary = {'accuracy': lr_summary['accuracy'],
                   'dev_{}'.format(args.ind): lr_summary[args.ind],
                   'dev_{}'.format(args.ood): lr_summary[args.ood]}
-    lr_summary = {'{}_{}_topk_{}_nh_{}'.format(args.ind, args.ood, args.topk, args.nh): lr_summary}
+    lr_summary = {'{}&{}_topk={}_nh={}'.format(args.ind, args.ood, args.topk, args.nh): lr_summary}
 
     summary_manger = SummaryManager(backbone_dir)
     summary_manger.load('summary.json')
     summary_manger.update(lr_summary)
     summary_manger.save('summary.json')
 
-    with open(detector_dir / 'detector_topk_{}_nh_{}.pkl'.format(args.topk, args.nh), mode='wb') as io:
+    with open(detector_dir / 'detector_topk={}_nh={}.pkl'.format(args.topk, args.nh), mode='wb') as io:
         pickle.dump({'lr': detector}, io)
+

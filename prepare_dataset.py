@@ -8,8 +8,8 @@ from sklearn.model_selection import train_test_split
 parser = argparse.ArgumentParser()
 parser.add_argument('--ind', type=str, choices=["cr", "mpqa", "mr", "sst2", "subj", "trec"])
 parser.add_argument('--ood', type=str, choices=["cr", "mpqa", "mr", "sst2", "subj", "trec"])
-parser.add_argument('--dev_ind_size', type=int, default=1000)
-parser.add_argument('--val_ind_size', type=int, default=1000)
+parser.add_argument('--dev_ind_size', type=int, default=500)
+parser.add_argument('--test_ind_size', type=int, default=2000)
 
 
 if __name__ == '__main__':
@@ -41,10 +41,10 @@ if __name__ == '__main__':
         ood_all = pd.concat(ood_all, ignore_index=True, sort=False)
         ood_all = ood_all[~ood_all['document'].isna()]
 
-    tr_ind, test_ind = train_test_split(ind_all, test_size=args.val_ind_size, random_state=777)
+    tr_ind, test_ind = train_test_split(ind_all, test_size=args.test_ind_size, random_state=777)
     tr_ind, dev_ind = train_test_split(tr_ind, test_size=args.dev_ind_size, random_state=777)
 
-    tr_ood, test_ood = train_test_split(ood_all, test_size=args.val_ind_size, random_state=777)
+    tr_ood, test_ood = train_test_split(ood_all, test_size=args.test_ind_size, random_state=777)
     tr_ood, dev_ood = train_test_split(tr_ood, test_size=args.dev_ind_size, random_state=777)
 
     sub_dir = par_dir / '{}'.format(args.ood)

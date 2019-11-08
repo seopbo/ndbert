@@ -28,8 +28,8 @@ class BertClassifier(BertPreTrainedModel):
             all_hidden_states = [
                 transformer_layer[:, 0, :] for transformer_layer in outputs[2][:-1]
             ]
-            # all_hidden_states.append(pooled_output)
-
+            all_hidden_states.append(pooled_output) # pooled output
+            all_hidden_states = [outputs[2][-1][:, 0, :]] + all_hidden_states# embedding layer
             return logits, all_hidden_states
         else:
             return logits, outputs[0][:, 0, :]

@@ -114,7 +114,7 @@ if __name__ == '__main__':
         features = np.concatenate(features, axis=1)
         label = np.zeros(features.shape[0]) if args.ind == args.tgt else np.ones(features.shape[0])
 
-    with open(detector_dir / 'detector_topk_{}_nh_{}.pkl'.format(args.topk, args.nh), mode='rb') as io:
+    with open(detector_dir / 'detector_topk={}_nh={}.pkl'.format(args.topk, args.nh), mode='rb') as io:
         detector = pickle.load(io)
 
     yhat = detector['lr'].predict(features)
@@ -126,6 +126,6 @@ if __name__ == '__main__':
 
     summary_manger = SummaryManager(backbone_dir)
     summary_manger.load('summary.json')
-    summary_manger.summary['{}_{}_topk_{}_nh_{}'.format(args.ind,
+    summary_manger.summary['{}&{}_topk={}_nh={}'.format(args.ind,
                                                         args.ood, args.topk, args.nh)].update(lr_summary)
     summary_manger.save('summary.json')

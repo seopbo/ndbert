@@ -16,7 +16,7 @@ parser.add_argument("--ind", default="trec",
                     help="directory of in distribution is not sub-directory")
 parser.add_argument("--data", default="train", help="Extracting params from specific data")
 parser.add_argument("--type", default="bert-base-uncased", help="pretrained weights of bert")
-parser.add_argument("--nh", default=12, type=int, help="using hidden states of model from the last hidden state")
+parser.add_argument("--nh", default=13, type=int, help="using hidden states of model from the last hidden state")
 
 
 if __name__ == "__main__":

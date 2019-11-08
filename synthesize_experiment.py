@@ -22,9 +22,13 @@ if __name__ == '__main__':
         tmp = exp_summ.summary.get(detector)
         tmp_acc = tmp.pop('accuracy')
         tmp_df = pd.DataFrame(tmp.values())
-        tmp_df = tmp_df.set_index([[detector] * len(tmp.keys()), [tmp_acc] * len(tmp.keys()), list(tmp.keys())])
+        tmp_names = detector.split('_')
+        tmp_df = tmp_df.set_index([[tmp_names[0]] * len(tmp.keys()),
+                                   [int(tmp_names[1].split('=')[-1])] * len(tmp.keys()),
+                                   [int(tmp_names[2].split('=')[-1])] * len(tmp.keys()),
+                                   [tmp_acc] * len(tmp.keys()), list(tmp.keys())])
         tmp_df = tmp_df.reset_index()
-        tmp_df.columns = ['detector', 'dev_accuracy', 'data'] + list(tmp_df.columns[3:])
+        tmp_df.columns = ['detector', 'topk', 'nh', 'dev_accuracy', 'data'] + list(tmp_df.columns[5:])
         result_of_detectors.append(tmp_df)
     else:
         results = pd.concat(result_of_detectors, sort=False, ignore_index=True)
