@@ -33,4 +33,4 @@ if __name__ == '__main__':
     else:
         results = pd.concat(result_of_detectors, sort=False, ignore_index=True)
 
-    results.to_csv(backbone_dir / 'results_of_detectors.txt', sep='\t', index=False)
+    results.to_csv(backbone_dir / 'results.txt', sep='\t', index=False)

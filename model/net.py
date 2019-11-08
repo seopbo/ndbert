@@ -32,4 +32,4 @@ class BertClassifier(BertPreTrainedModel):
             all_hidden_states = [outputs[2][-1][:, 0, :]] + all_hidden_states# embedding layer
             return logits, all_hidden_states
         else:
-            return logits, outputs[0][:, 0, :]
+            return logits, pooled_output#, outputs[0][:, 0, :]

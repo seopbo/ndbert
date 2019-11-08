@@ -36,4 +36,4 @@ if __name__ == '__main__':
                 count += 1
                 print(count)
 
-    call('python synthesize_experiment.py --ind {}'.format(args.ind), shell=True)
+    call('python synthesize_results.py --ind {}'.format(args.ind), shell=True)
