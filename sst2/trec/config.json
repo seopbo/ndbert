@@ -1,5 +1,0 @@
-{
-    "train": "sst2/trec/train_ood_2951.txt",
-    "dev": "sst2/trec/dev_ood_1000.txt",
-    "test": "sst2/trec/test_ood_2000.txt"
-}

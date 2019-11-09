@@ -1,5 +1,0 @@
-{
-    "train": "mr/cr/train_ood_771.txt",
-    "dev": "mr/cr/dev_ood_1000.txt",
-    "test": "mr/cr/test_ood_2000.txt"
-}

@@ -1,5 +1,0 @@
-{
-    "train": "mpqa/mr/train_ood_7460.txt",
-    "dev": "mpqa/mr/dev_ood_1000.txt",
-    "test": "mpqa/mr/test_ood_2000.txt"
-}

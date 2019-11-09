@@ -1,5 +1,0 @@
-{
-    "train": "subj/mpqa/train_ood_7603.txt",
-    "dev": "subj/mpqa/dev_ood_1000.txt",
-    "test": "subj/mpqa/test_ood_2000.txt"
-}
