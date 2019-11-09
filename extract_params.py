@@ -61,7 +61,7 @@ if __name__ == "__main__":
     # extract feature params
     filepath = getattr(data_config, args.data)
     ds = Corpus(filepath, preprocessor.preprocess)
-    dl = DataLoader(ds, batch_size=model_config.batch_size, num_workers=4)
+    dl = DataLoader(ds, batch_size=model_config.batch_size * 4, num_workers=4)
 
     if args.nh == 1:
         mean, precision = get_penultimate_feature_params(model, model_config.num_classes, dl, device)

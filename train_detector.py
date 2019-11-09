@@ -70,9 +70,9 @@ if __name__ == '__main__':
 
     # train detector
     dev_ind_ds = Corpus(par_config.dev, preprocessor.preprocess)
-    dev_ind_dl = DataLoader(dev_ind_ds, batch_size=256, num_workers=4)
+    dev_ind_dl = DataLoader(dev_ind_ds, batch_size=model_config.batch_size * 4, num_workers=4)
     dev_ood_ds = Corpus(sub_config.dev, preprocessor.preprocess)
-    dev_ood_dl = DataLoader(dev_ood_ds, batch_size=256, num_workers=4)
+    dev_ood_dl = DataLoader(dev_ood_ds, batch_size=model_config.batch_size * 4, num_workers=4)
 
     with open(backbone_dir / 'feature_params_{}.pkl'.format(args.nh), mode='rb') as io:
         feature_params = pickle.load(io)

@@ -79,7 +79,7 @@ if __name__ == '__main__':
     # evaluate detector
     filepath = getattr(tgt_config, args.data)
     ds = Corpus(filepath, preprocessor.preprocess)
-    dl = DataLoader(ds, batch_size=128, num_workers=4)
+    dl = DataLoader(ds, batch_size=model_config.batch_size * 4, num_workers=4)
 
     with open(backbone_dir / 'feature_params_{}.pkl'.format(args.nh), mode='rb') as io:
         feature_params = pickle.load(io)

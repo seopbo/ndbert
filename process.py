@@ -20,7 +20,7 @@ if __name__ == '__main__':
     for nh in args.nh:
         call('python extract_params.py --ind {} --type {} --nh {}'.format(args.ind, args.type, nh), shell=True)
 
-    count = 1
+    count = 0
     for ood in list_of_data:
         if ood == args.ind:
             continue
@@ -34,6 +34,9 @@ if __name__ == '__main__':
                 call('python evaluate_detector.py --ind {} --ood {} --tgt {} --type {} --topk {}'
                      ' --nh {}'.format(args.ind, ood, tgt, args.type, comb[0], comb[1]), shell=True)
                 count += 1
-                print(count)
+                print('{} / {}'.format(count, len(list_of_data) * len(args.nh) * len(args.topk)
+                                       * (len(list_of_data) - 1)))
+        else:
+            print('{}&{} model is processed'.format(args.ind, ood))
 
     call('python synthesize_results.py --ind {}'.format(args.ind), shell=True)
