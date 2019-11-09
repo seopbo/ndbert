@@ -80,10 +80,8 @@ if __name__ == "__main__":
     opt = optim.Adam(
         [
             {"params": model.bert.parameters(), "lr": model_config.learning_rate / 100},
-            {"params": model.classifier.parameters(), "lr": model_config.learning_rate},
-        ],
-        weight_decay=5e-4,
-    )
+            {"params": model.classifier.parameters(), "lr": model_config.learning_rate}
+        ], weight_decay=5e-4)
 
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     model.to(device)
