@@ -1,0 +1,5 @@
+{
+    "train": "mpqa/cr/train_ood_771.txt",
+    "dev": "mpqa/cr/dev_ood_1000.txt",
+    "test": "mpqa/cr/test_ood_2000.txt"
+}

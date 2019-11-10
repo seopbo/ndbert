@@ -1,0 +1,5 @@
+{
+    "train": "mr/train_ind_7460.txt",
+    "dev": "mr/dev_ind_1000.txt",
+    "test": "mr/test_ind_2000.txt"
+}
