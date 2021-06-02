@@ -85,7 +85,7 @@ tqdm==4.37.0
 traitlets==4.3.3
 transformers==2.1.1
 typed-ast==1.4.0
-urllib3==1.25.6
+urllib3==1.26.5
 wcwidth==0.1.7
 webencodings==0.5.1
 Werkzeug==0.16.0
